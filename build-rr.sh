@@ -94,14 +94,18 @@ parseargs ()
 	KERNONLY=false
 	RROBJ=
 	RUMPSRC=src-netbsd
+	LINUXSRC=lkl-linux
 	STDJ=-j4
 	EXTSRC=
+	linux_cmdopt=
+	linux_bldopt=
+	BUILDLINUX=false
 
 	DObuild=false
 	DOinstall=false
 
 	orignargs=$#
-	while getopts '?d:hj:ko:qs:' opt; do
+	while getopts '?d:hj:klo:qs:' opt; do
 		case "$opt" in
 		'j')
 			[ -z "$(echo ${OPTARG} | tr -d '[0-9]')" ] \
@@ -113,6 +117,11 @@ parseargs ()
 			;;
 		'k')
 			KERNONLY=true
+			;;
+		'l')
+			linux_cmdopt="-l ${LINUXSRC}"
+			linux_bldopt="linuxbuild"
+			BUILDLINUX=true
 			;;
 		'o')
 			RROBJ="${OPTARG}"
@@ -254,6 +263,7 @@ setvars ()
 	abspath RRDEST
 	abspath RROBJ
 	abspath RUMPSRC
+	abspath LINUXSRC
 }
 
 buildrump ()
@@ -312,7 +322,8 @@ EOF
 	# build rump kernel
 	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
 	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
-	    "$@" build kernelheaders install
+	    ${linux_cmdopt}						\
+	    "$@" build kernelheaders ${linux_bldopt} install
 
 	echo '>>'
 	echo '>> Rump kernel components built.  Proceeding to build'
@@ -446,6 +457,10 @@ doinstall ()
 		rm -rf lib/pkgconfig
 		find lib -maxdepth 1 -name librump\*.a \
 		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+		if ${BUILDLINUX} ; then
+		    find lib -maxdepth 1 -name liblkl.a \
+			 -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+		fi
 		find lib -maxdepth 1 -name \*.a \
 		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
 

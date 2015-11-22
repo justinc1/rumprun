@@ -12,14 +12,18 @@ set -e
 TESTMODE=apptools
 TESTCONFIGURE=true
 TESTCMAKE=$(which cmake || echo "")
+LINUX=
 
-while getopts 'kqh' opt; do
+while getopts 'klqh' opt; do
 	case "$opt" in
 	'k')
 		TESTMODE=kernonly
 		;;
 	'q')
 		TESTCONFIGURE=false
+		;;
+	'l')
+		LINUX=yes
 		;;
 	'h'|'?')
 		echo "$0 [-k|-q]"
@@ -81,7 +85,7 @@ test_kernonly()
 		! type gmake >/dev/null 2>&1 || MAKE=gmake
 	fi
 
-	${MAKE} PLATFORM=${PLATFORM} kernonly-tests
+	${MAKE} PLATFORM=${PLATFORM} LINUX=${LINUX} kernonly-tests
 }
 
 test_${TESTMODE}

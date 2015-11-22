@@ -1,0 +1,32 @@
+## Customize the test machine
+machine:
+  # Add some environment variables
+  environment:
+   CC: gcc-4.8
+   CXX: g++-4.8
+
+## Customize dependencies
+dependencies:
+  pre:
+    - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    - sudo apt-get update -y
+    - sudo apt-get install qemu-kvm libxen-dev -y
+    - sudo apt-get install g++-4.8 -y
+    - sudo apt-get install bc libfuse-dev libarchive-dev -y
+
+    # configure matrix parameters
+    - tests/circleci_cfg.sh
+
+  post:
+    - git submodule update --init
+
+test:
+  override:
+    - ./build-rr.sh -o myobj -j16 -qq ${KERNONLY} ${LINUX} ${PLATFORM} ${EXTRAFLAGS}:
+        parallel: true
+    - RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY} ${LINUX}:
+        parallel: true
+    - RUMPRUN_SHCONF=./myobj/config.sh ./tests/runtests.sh ${TESTS}:
+        parallel: true
+    - RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/nolibc/test-nolibc.sh ${TESTS}:
+        parallel: true

@@ -15,13 +15,23 @@ LDFLAGS+= ${LDFLAGS.${MACHINE_GNU_ARCH}.${PLATFORM}}
 
 OBJS= main.o ${RROBJ}/rumprun.o
 
+LIB_RUMP=-lrumpvfs -lrump
+
+# Linux libos
+LINUX?=no
+ifeq (${LINUX},yes)
+LDFLAGS+=-Wl,--unresolved-symbols=ignore-in-object-files
+CFLAGS+= -g -O0 -DLINUX_RUMP
+LIB_RUMP=-llkl
+endif
+
 .PHONY: clean
 
 main.elf: ${OBJS}
 	${CC} ${CFLAGS} ${LDFLAGS} -T${LDSCRIPT} 			\
 	${OBJS} 							\
 	-nostdlib							\
-	-Wl,--whole-archive -lrumpvfs -lrump -Wl,--no-whole-archive	\
+	-Wl,--whole-archive ${LIB_RUMP} -Wl,--no-whole-archive		\
 	-lcompiler_rt 							\
 	-o $@
 

@@ -6,7 +6,15 @@
 #include "nolibc.h"
 
 #include <rump/rump.h>
+#ifdef LINUX_RUMP
+#include <linux/reboot.h>
+#ifndef loff_t
+typedef long long      loff_t;
+#endif /* loff_t */
+#include <linux/rump_syscalls.h>
+#else
 #include <rump/rump_syscalls.h>
+#endif
 
 static ssize_t
 writestr(int fd, const char *str)
@@ -25,7 +33,7 @@ bmk_mainthread(void *cmdline)
 	writestr(1, "Hello, stdout!\n");
 
 	bmk_printf("open(/notexisting): ");
-	fd = rump_sys_open("/notexisting", 0);
+	fd = rump_sys_open("/notexisting", 0, 0);
 	if (fd == -1) {
 		int errno = *bmk_sched_geterrno();
 		if (errno == RUMP_ENOENT) {
@@ -37,5 +45,12 @@ bmk_mainthread(void *cmdline)
 		bmk_printf("Success?! fd=%d\n", fd);
 	}
 
-	rump_sys_reboot(0, 0);
+#ifdef LINUX_RUMP
+	rump_sys_reboot(LINUX_REBOOT_MAGIC1,
+			LINUX_REBOOT_MAGIC2,
+			LINUX_REBOOT_CMD_RESTART,
+			(void *)"reboot");
+#else
+	rump_sys_reboot(0,0);
+#endif
 }
