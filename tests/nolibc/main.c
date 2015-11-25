@@ -8,9 +8,6 @@
 #include <rump/rump.h>
 #ifdef LINUX_RUMP
 #include <linux/reboot.h>
-#ifndef loff_t
-typedef long long      loff_t;
-#endif /* loff_t */
 #include <linux/rump_syscalls.h>
 #else
 #include <rump/rump_syscalls.h>

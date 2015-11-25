@@ -23,10 +23,9 @@ LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET)
 # Linux libos
 LINUX?=no
 ifeq (${LINUX},yes)
-LDFLAGS+=-Wl,--unresolved-symbols=ignore-in-object-files
 CFLAGS+= -g -O0 -DLINUX_RUMP
-LIB_RUMP=-llkl
-LIB_RUMP+=-lrumpdev_pci
+LIB_RUMP=-llinux
+LIB_RUMP+=-lrumpdev_linux_pci
 endif
 
 .PHONY: clean

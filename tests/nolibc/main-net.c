@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include <bmk-core/errno.h>
 #include <bmk-core/mainthread.h>
 #include <bmk-core/printf.h>
@@ -13,9 +11,6 @@
 #include <linux/time.h>
 #define AF_INET6 10
 
-#ifndef loff_t
-typedef long long      loff_t;
-#endif /* loff_t */
 #include <linux/rump_syscalls.h>
 
 int lkl_if_up(int ifindex);
@@ -25,6 +20,7 @@ int lkl_sys_socket(int, int, int);
 #else
 #include <rump/rump_syscalls.h>
 #include <rump/netconfig.h>
+#undef  __RENAME
 #include <sys/timespec.h>
 #endif
 
@@ -125,7 +121,7 @@ bmk_mainthread(void *cmdline)
 
 	bmk_printf("sleeping 1 secs\n");
 	struct timespec ts = {1, 0};
-	rump_sys_nanosleep(&ts, NULL);
+	rump_sys_nanosleep(&ts, 0);
 	send_packet();
 
 #ifdef LINUX_RUMP

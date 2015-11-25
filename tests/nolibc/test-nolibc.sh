@@ -20,9 +20,17 @@ if [ ${TESTS} != qemu ]; then
 fi
 
 cd $(dirname $0)
+echo "=== test main.elf ==="
 rumprun qemu -M 512 -g "-nographic -vga none" -i main.elf </dev/null &> log.txt &
+sleep 3
+kill %1 || echo "ignore errors"
+cat log.txt
 
-sleep 5
+echo "=== test main-net.elf ==="
+rm -f log.txt
+rumprun qemu -M 512 -g "-net nic,model=virtio -net tap,script=no,vlan=0,ifname=tap0 -nographic -vga none" \
+	-i main-net.elf </dev/null &> log.txt &
+sleep 3
 kill %1 || echo "ignore errors"
 cat log.txt
 

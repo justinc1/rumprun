@@ -356,6 +356,22 @@ buildpci ()
 		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} dependall
 		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} install
 	fi
+
+	if ${BUILDLINUX} ; then
+		abspath BROBJ
+		abspath STAGING
+
+		HYPERCALLS=
+		if [ ${PLATFORM} = "hw" ] ; then
+			HYPERCALLS=${BROBJ}/sys/rump/dev/lib/libpci/rumppci.o
+		else
+			HYPERCALLS=${BROBJ}/sys/rump/dev/lib/libpci/rumphyper_pci.o
+		fi
+		make RUMP_BMK_PCI_HYPERCALLS=${HYPERCALLS} -C ${LINUXSRC}/arch/lkl/drivers/
+		make RUMP_BMK_PCI_HYPERCALLS=${HYPERCALLS} -C ${LINUXSRC}/arch/lkl/drivers/ \
+		     DESTDIR=${STAGING} install
+	fi
+
 }
 
 wraponetool ()
@@ -459,7 +475,7 @@ doinstall ()
 		find lib -maxdepth 1 -name librump\*.a \
 		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
 		if ${BUILDLINUX} ; then
-		    find lib -maxdepth 1 -name liblkl.a \
+		    find lib -maxdepth 1 -name liblinux.a \
 			 -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
 		fi
 		find lib -maxdepth 1 -name \*.a \
