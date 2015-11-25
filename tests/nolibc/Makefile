@@ -13,9 +13,12 @@ LDSCRIPT= ${RROBJ}/bmk.ldscript
 
 LDFLAGS+= ${LDFLAGS.${MACHINE_GNU_ARCH}.${PLATFORM}}
 
-OBJS= main.o ${RROBJ}/rumprun.o
+SRCS= main.c main-net.c
+OBJS= $(patsubst %.c,%.o, $(SRCS)) ${RROBJ}/rumprun.o
+KERNELS= $(patsubst %.c,%.elf, $(SRCS))
 
-LIB_RUMP=-lrumpvfs -lrump
+LIB_RUMP_NET= -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_config
+LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET)
 
 # Linux libos
 LINUX?=no
@@ -23,13 +26,21 @@ ifeq (${LINUX},yes)
 LDFLAGS+=-Wl,--unresolved-symbols=ignore-in-object-files
 CFLAGS+= -g -O0 -DLINUX_RUMP
 LIB_RUMP=-llkl
+LIB_RUMP+=-lrumpdev_pci
 endif
 
 .PHONY: clean
 
-main.elf: ${OBJS}
+all: ${KERNELS}
+
+${KERNELS}: ${OBJS}
+
+%.o : %.c
+	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
+
+%.elf: %.o
 	${CC} ${CFLAGS} ${LDFLAGS} -T${LDSCRIPT} 			\
-	${OBJS} 							\
+	$< ${RROBJ}/rumprun.o						\
 	-nostdlib							\
 	-Wl,--whole-archive ${LIB_RUMP} -Wl,--no-whole-archive		\
 	-lcompiler_rt 							\
