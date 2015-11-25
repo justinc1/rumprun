@@ -40,12 +40,14 @@ writestr(int fd, const char *str)
 	return rump_sys_write(fd, str, bmk_strlen(str));
 }
 
+#define SEND_COUNT       10
 static void
 send_packet(void)
 {
 	int sock, ret;
 	char buf[16] = "0123456789012345";
 	struct sockaddr sin;
+	int i = 0;
 
 #ifdef LINUX_RUMP
 	lkl_if_up(1);		/* lo */
@@ -82,13 +84,20 @@ send_packet(void)
 	sin.sa_port = 3939;
 	bmk_memcpy(sin.sa_data, &dest, sizeof(dest));
 
-	if ((ret = rump_sys_sendto(sock, buf, sizeof(buf), 0,
-				   (struct sockaddr *)&sin,
-				   sizeof(sin))) <= 0) {
-		bmk_printf("socket write error %d\n", *bmk_sched_geterrno());
+	while (i < SEND_COUNT) {
+		struct timespec ts = {0, 1000*1000*10};
+
+		if ((ret = rump_sys_sendto(sock, buf, sizeof(buf), 0,
+					   (struct sockaddr *)&sin,
+					   sizeof(sin))) <= 0) {
+			bmk_printf("socket write error %d\n", *bmk_sched_geterrno());
+		}
+		else
+			bmk_printf("socket write success !! written %d\n", ret);
+		i++;
+
+		rump_sys_nanosleep(&ts, 0);
 	}
-        else
-		bmk_printf("socket write success !! written %d\n", ret);
 
 	return;
 }
@@ -119,10 +128,10 @@ bmk_mainthread(void *cmdline)
 		bmk_printf("Success?! fd=%d\n", fd);
 	}
 
+	send_packet();
 	bmk_printf("sleeping 1 secs\n");
 	struct timespec ts = {1, 0};
 	rump_sys_nanosleep(&ts, 0);
-	send_packet();
 
 #ifdef LINUX_RUMP
 	rump_sys_reboot(LINUX_REBOOT_MAGIC1,

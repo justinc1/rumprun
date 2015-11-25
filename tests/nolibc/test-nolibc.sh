@@ -31,6 +31,6 @@ rm -f log.txt
 rumprun qemu -M 512 -g "-net nic,model=virtio -net tap,script=no,vlan=0,ifname=tap0 -nographic -vga none" \
 	-i main-net.elf </dev/null &> log.txt &
 sleep 3
-kill %1 || echo "ignore errors"
+pkill qemu || echo "ignore errors"
 cat log.txt
 
