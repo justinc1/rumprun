@@ -13,9 +13,9 @@ export PATH="${PATH}:${RRDEST}/bin"
 
 TESTS=$1
 
-if [ ${TESTS} != qemu ]; then
+if [ ${TESTS} != "-k" ]; then
     echo "`basename $0`: unrecognized option ${TESTS}"
-    echo "`basename $0` qemu is only supported."
+    echo "`basename $0` kernonly is only supported."
     exit 0
 fi
 
@@ -31,10 +31,11 @@ echo "=== test main-net.elf ==="
 rm -f log.txt
 #rumprun qemu -M 512 -g "-net nic,model=virtio -net tap,script=no,vlan=0,ifname=tap0 -nographic -vga none" \
 #	-i main-net.elf </dev/null &> log.txt &
-sudo ip tuntap add tap0 mode tap
-sudo ip ad add 10.0.0.2/24 dev tap0
-sudo ifconfig tap0 up
-qemu-system-x86_64 -net nic,model=virtio -net tap,script=no,vlan=0,ifname=tap0 -no-kvm -m 512 -kernel main-net.elf -s -nographic -vga none </dev/null &> log.txt &
+## Disabled tuntap since Circle CI seems not to do it (2015/12/5)
+#sudo ip tuntap add tap0 mode tap
+#sudo ip ad add 10.0.0.2/24 dev tap0
+#sudo ifconfig tap0 up
+qemu-system-x86_64 -net nic,model=virtio -no-kvm -m 512 -kernel main-net.elf -s -nographic -vga none </dev/null &> log.txt &
 
 sleep 3
 pkill qemu || echo "ignore errors"

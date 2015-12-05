@@ -18,7 +18,8 @@ OBJS= $(patsubst %.c,%.o, $(SRCS)) ${RROBJ}/rumprun.o
 KERNELS= $(patsubst %.c,%.elf, $(SRCS))
 
 LIB_RUMP_NET= -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_config
-LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET)
+LIB_RUMP_PCI= -lrumpdev_pci_virtio -lrumpdev_virtio_if_vioif -lrumpdev_pci -lrumpdev
+LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET) $(LIB_RUMP_PCI)
 
 # Linux libos
 LINUX?=no

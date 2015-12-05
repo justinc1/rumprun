@@ -48,6 +48,7 @@ send_packet(void)
 	char buf[16] = "0123456789012345";
 	struct sockaddr sin;
 	int i = 0;
+	struct timespec ts = {10, 0};
 
 #ifdef LINUX_RUMP
 	lkl_if_up(1);		/* lo */
@@ -81,11 +82,12 @@ send_packet(void)
 	sin.sa_len = sizeof(sin);	/* FIXME */
 #endif
 	sin.sa_family = RUMP_AF_INET;
-	sin.sa_port = 3939;
+	sin.sa_port = 0x0800;
 	bmk_memcpy(sin.sa_data, &dest, sizeof(dest));
 
 	while (i < SEND_COUNT) {
-		struct timespec ts = {0, 1000*1000*10};
+		ts.tv_sec = 0;
+		ts.tv_nsec = 1000*1000*10;
 
 		if ((ret = rump_sys_sendto(sock, buf, sizeof(buf), 0,
 					   (struct sockaddr *)&sin,
@@ -103,13 +105,15 @@ send_packet(void)
 }
 
 extern char *boot_cmdline;
+
 void
 bmk_mainthread(void *cmdline)
 {
 	int rv, fd;
 
 #ifdef LINUX_RUMP
-	boot_cmdline = "loglevel=7";
+//	boot_cmdline = "loglevel=10 debug";
+//	boot_cmdline = "loglevel=7 debug";
 #endif
 	rv = rump_init();
 	bmk_printf("rump kernel init complete, rv %d\n", rv);
@@ -129,8 +133,8 @@ bmk_mainthread(void *cmdline)
 	}
 
 	send_packet();
-	bmk_printf("sleeping 1 secs\n");
-	struct timespec ts = {1, 0};
+	bmk_printf("sleeping 10 secs\n");
+	struct timespec ts = {10, 0};
 	rump_sys_nanosleep(&ts, 0);
 
 #ifdef LINUX_RUMP

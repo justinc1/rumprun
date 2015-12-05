@@ -28,5 +28,5 @@ test:
         parallel: true
     - RUMPRUN_SHCONF=./myobj/config.sh ./tests/runtests.sh ${TESTS}:
         parallel: true
-    - RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/nolibc/test-nolibc.sh qemu:
+    - RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk sh -x ./tests/nolibc/test-nolibc.sh ${KERNONLY}:
         parallel: true

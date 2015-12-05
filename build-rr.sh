@@ -363,12 +363,12 @@ buildpci ()
 
 		HYPERCALLS=
 		if [ ${PLATFORM} = "hw" ] ; then
-			HYPERCALLS=${BROBJ}/sys/rump/dev/lib/libpci/rumppci.o
+			HYPERCALLS="${BROBJ}/sys/rump/dev/lib/libpci/rumppci.o ${BROBJ}/sys/rump/dev/lib/libpci/rumpdma.o"
 		else
-			HYPERCALLS=${BROBJ}/sys/rump/dev/lib/libpci/rumphyper_pci.o
+			HYPERCALLS="${BROBJ}/sys/rump/dev/lib/libpci/rumphyper_pci.o ${BROBJ}/sys/rump/dev/lib/libpci/rumphyper_dma.o"
 		fi
-		make RUMP_BMK_PCI_HYPERCALLS=${HYPERCALLS} -C ${LINUXSRC}/arch/lkl/drivers/
-		make RUMP_BMK_PCI_HYPERCALLS=${HYPERCALLS} -C ${LINUXSRC}/arch/lkl/drivers/ \
+		make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LINUXSRC}/arch/lkl/drivers/
+		make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LINUXSRC}/arch/lkl/drivers/ \
 		     DESTDIR=${STAGING} install
 	fi
 
