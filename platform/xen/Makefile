@@ -1,8 +1,6 @@
 .PHONY: all
 all: default
 
-PLATFORM_DEFAULT_TESTER=xen
-
 include ../../global.mk
 include ${BUILDRUMP_TOOLFLAGS}
 
@@ -16,27 +14,19 @@ OBJ_DIR ?= $(CURDIR)/obj
 
 LDSCRIPT:= $(abspath $(OBJ_DIR)/xen/minios.lds)
 
+INSTALLTGTS=	librumpxen_xendev_install librumpnet_xenif_install
+
 include ../Makefile.inc
 
 .PHONY: default
 default: prepare links mini-os ${MAINOBJ} ${TARGETS}
 
-CPPFLAGS+= -isystem xen/include -I. -I../../include
-CPPFLAGS+= -no-integrated-cpp -nostdinc
+CPPFLAGS+= -isystem xen/include
+CPPFLAGS+= -no-integrated-cpp
 
-CFLAGS += -fno-builtin ${BUILDRUMP_TOOL_CFLAGS}
-
-# This is semi-duplicated from xen/arch/x86/arch.mk, can we avoid that?
-# XXX Which parts of the rumprun source *must* be compiled with these flags?
-ifeq ($(MACHINE),i386)
-CFLAGS += -march=i686
-endif
-ifeq ($(MACHINE),x86_64)
-CFLAGS += -mno-red-zone -fno-reorder-blocks -fno-asynchronous-unwind-tables
-endif
+CFLAGS += -fno-builtin
 
 rump-src-y += rumphyper_bio.c
-
 rump-src-y += init.c
 
 # Rump kernel middleware objects to build.
@@ -56,7 +46,12 @@ mini-os:
 links:
 	$(MAKE) -C xen links
 
-$(MAINOBJ): $(RUMP_OBJS) platformlibs
+$(eval $(call BUILDLIB_target,librumpxen_xendev,.))
+$(eval $(call BUILDLIB_target,librumpnet_xenif,.))
+
+xenlibs: ${RROBJLIB}/librumpxen_xendev/librumpxen_xendev.a ${RROBJLIB}/librumpnet_xenif/librumpnet_xenif.a
+
+$(MAINOBJ): $(RUMP_OBJS) platformlibs xenlibs
 	$(CC) -Wl,-r $(CFLAGS) $(LDFLAGS) $(RUMP_OBJS) -nostdlib -o $@ \
 	    -L${RROBJLIB}/libbmk_core -L${RROBJLIB}/libbmk_rumpuser \
 	    -Wl,--whole-archive -lbmk_rumpuser -lbmk_core -Wl,--no-whole-archive
@@ -67,8 +62,4 @@ clean:	commonclean
 	$(MAKE) -C xen OBJ_DIR=$(OBJ_DIR)/xen clean
 	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/lib/*.o buildtest $(MAINOBJ)
 
-cleanrump: clean
-	rm -rf rump rumpobj rumptools
-
-distcleanrump: cleanrump
-	$(MAKE) -C ../../tests clean
+cleandir: clean

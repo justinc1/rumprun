@@ -3,11 +3,6 @@ include ${BUILDRUMP_TOOLFLAGS}
 
 default: all
 
-PLATFORM_DEFAULT_TESTER=qemu
-
-CPPFLAGS=	-Iinclude -I../../include -I${RROBJ}/include -nostdinc
-CFLAGS+=	${BUILDRUMP_TOOL_CFLAGS}
-
 # Check if we're building for a supported target.
 supported= false
 # assume we're doing "make clean"
@@ -39,7 +34,7 @@ include arch/${ARCHDIR}/Makefile.inc
 OBJS:=	$(patsubst %.c,${RROBJ}/platform/%.o,${SRCS}) \
 	$(patsubst %.S,${RROBJ}/platform/%.o,${ASMS})
 
-.PHONY:	clean cleandir test all
+.PHONY:	clean cleandir all
 
 all:  links archdirs ${MAINOBJ} ${TARGETS}
 
@@ -69,9 +64,3 @@ clean: commonclean
 	rm -f ${OBJS_BMK} include/hw/machine buildtest ${MAINOBJ}
 
 cleandir: clean
-
-cleanrump: clean
-	rm -rf rump rumpobj rumptools
-
-distcleanrump: cleanrump
-	${MAKE} -C ../../tests clean

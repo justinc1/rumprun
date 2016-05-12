@@ -63,14 +63,14 @@ rumprun_enosys(void)
 	return ENOSYS;
 }
 __strong_alias(rumprun_notmain,rumprun_enosys);
-__weak_alias(rumpbake_main1,rumprun_notmain);
-__weak_alias(rumpbake_main2,rumprun_notmain);
-__weak_alias(rumpbake_main3,rumprun_notmain);
-__weak_alias(rumpbake_main4,rumprun_notmain);
-__weak_alias(rumpbake_main5,rumprun_notmain);
-__weak_alias(rumpbake_main6,rumprun_notmain);
-__weak_alias(rumpbake_main7,rumprun_notmain);
-__weak_alias(rumpbake_main8,rumprun_notmain);
+__weak_alias(rumprun_main1,rumprun_notmain);
+__weak_alias(rumprun_main2,rumprun_notmain);
+__weak_alias(rumprun_main3,rumprun_notmain);
+__weak_alias(rumprun_main4,rumprun_notmain);
+__weak_alias(rumprun_main5,rumprun_notmain);
+__weak_alias(rumprun_main6,rumprun_notmain);
+__weak_alias(rumprun_main7,rumprun_notmain);
+__weak_alias(rumprun_main8,rumprun_notmain);
 
 __weak_alias(rump_init_server,rumprun_enosys);
 
@@ -86,7 +86,7 @@ rumprun_boot(char *cmdline)
 	};
 	int tmpfserrno;
 	char *sysproxy;
-	int rv;
+	int rv, x;
 
 	rump_boot_setsigmodel(RUMP_SIGMODEL_IGNORE);
 	rump_init();
@@ -121,15 +121,8 @@ rumprun_boot(char *cmdline)
 	 * (note: we don't check for errors since net.inet.ip.dad_count
 	 * is not present if the networking stack isn't present)
 	 */
-#if 0
-	/* XXXX: cpp macro lossage in the src-netbsd, cannot fix easily now */
-	int x = 0;
+	x = 0;
 	sysctlbyname("net.inet.ip.dad_count", NULL, NULL, &x, sizeof(x));
-#else
-	extern int rumpns_ip_dad_count;
-	rumpns_ip_dad_count = 0;
-#endif
-
 
 	rumprun_config(cmdline);
 
@@ -137,6 +130,7 @@ rumprun_boot(char *cmdline)
 	if (sysproxy) {
 		if ((rv = rump_init_server(sysproxy)) != 0)
 			err(1, "failed to init sysproxy at %s", sysproxy);
+		printf("sysproxy listening at: %s\n", sysproxy);
 	}
 
 	/*

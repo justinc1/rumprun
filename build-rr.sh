@@ -62,6 +62,8 @@ BUILDRUMP=$(pwd)/buildrump.sh
 # overriden by script if true
 HAVECXX=false
 
+: ${GIT:=git}
+
 # figure out where gmake lies
 if [ -z "${MAKE:-}" ]; then
 	MAKE=make
@@ -141,7 +143,19 @@ parseargs ()
 	done
 	shift $((${OPTIND} - 1))
 
-	[ -n "${RRDEST}" ] || RRDEST=./rumprun${EXTSRC}
+	# are we on a git branch which is not master?
+	if type ${GIT} >/dev/null; then
+		GITBRANCH=$(${GIT} rev-parse --abbrev-ref HEAD 2>/dev/null)
+		if [ ${GITBRANCH} = "master" -o ${GITBRANCH} = "HEAD" ]; then
+			GITBRANCH=
+		else
+			GITBRANCH=-${GITBRANCH}
+		fi
+	else
+		GITBRANCH=
+	fi
+
+	[ -n "${RRDEST}" ] || RRDEST=./rumprun${GITBRANCH}${EXTSRC}
 
 	: ${BUILD_QUIET:=}
 
@@ -217,6 +231,35 @@ checksubmodules ()
 	fi
 }
 
+# check that the necessary things are available on the build system
+probeprereqs ()
+{
+
+	if [ "${PLATFORM}" = "xen" ]; then (
+		. "${RROBJ}/config.sh"
+		# probe location of Xen headers
+		found=false
+		for loc in /usr/pkg/include/xen /usr/include/xen; do
+			if printf '#include <stdint.h>\n#include <xen.h>\n'\
+			    | ${CC} -I${loc} -x c - -c -o /dev/null \
+			    >/dev/null 2>&1 ; then
+				found=true
+				break
+			fi
+		done
+
+		if ${found}; then
+			echo "XEN_HEADERS=${loc}" >> ${RROBJ}/config.mk
+			echo "XEN_HEADERS=\"${loc}\"" >> ${RROBJ}/config.sh
+		else
+			echo '>> You need to provide Xen headers.'
+			echo '>> The exactly source depends on your system'
+			echo '>> (e.g. libxen-dev package on some systems)'
+			die Xen headers not found
+		fi )
+	fi
+}
+
 checkprevbuilds ()
 {
 
@@ -254,7 +297,7 @@ setvars ()
 	MACHINE_GNU_ARCH="${BUILDRUMP_MACHINE_GNU_ARCH}"
 
 	if [ -z "${RROBJ}" ]; then
-		RROBJ="./obj-${MACHINE}-${PLATFORM}${EXTSRC}"
+		RROBJ="./obj-${MACHINE}-${PLATFORM}${GITBRANCH}${EXTSRC}"
 		${KERNONLY} && RROBJ="${RROBJ}-kernonly"
 	fi
 	STAGING="${RROBJ}/dest.stage"
@@ -267,13 +310,53 @@ setvars ()
 	abspath LINUXSRC
 }
 
-buildrump ()
+checktools ()
 {
 
 	# Check that a clang build is not attempted.
 	[ -z "${BUILDRUMP_HAVE_LLVM}" ] \
 	    || die rumprun does not yet support clang ${CC:+(\$CC: $CC)}
 
+	delay=5
+
+	# check that gcc is modern enough
+	vers=$(${CC:-cc} -E -dM - < /dev/null | awk '
+	    /__GNUC__/ {version += 100*$3}
+	    /__GNUC_MINOR__/ {version += $3}
+	    END { print version; if (version) exit 0; exit 1; }') \
+		|| unable to probe cc version
+	if [ ${vers} -lt 406 ]; then
+		die gcc is too old, need 4.6 or later. ${CC:+(\$CC: $CC)}
+	elif [ ${vers} -lt 408 ]; then
+		echo '>>'
+		echo ">> WARNING: gcc is old. ${CC:+(\$CC: $CC)}"
+		echo '>> Version 4.8 or later is recommended.'
+		echo ">> (continuing in ${delay} seconds)"
+		echo '>>'
+		sleep ${delay}
+	fi
+
+	# check that ld is modern enough
+	vers=$(${CC:-cc} -Wl,--version 2>&1 | awk '
+	    /GNU ld/{version += 100*$NF}
+	    END { print version; if (version) exit 0; exit 1; }') \
+		|| die unable to probe ld version
+	if [ ${vers} -lt 222 ]; then
+		die ld is too old, need 2.22 or later. probed version: ${vers}
+	elif [ ${vers} -lt 225 ]; then
+		echo '>>'
+		echo ">> WARNING: ld is old. probed version: ${vers}"
+		echo '>> Version 2.25 or later is recommended.'
+		echo ">> (continuing in ${delay} seconds)"
+		echo '>>'
+		sleep ${delay}
+	fi
+}
+
+buildrump ()
+{
+
+	checktools
 	checkprevbuilds
 
 	extracflags=
@@ -302,11 +385,22 @@ buildrump ()
 
 	makeconfig ${RROBJ}/config.mk ''
 	makeconfig ${RROBJ}/config.sh \"
+	# XXX: gcc is hardcoded
 	cat > ${RROBJ}/config << EOF
 export RUMPRUN_MKCONF="${RROBJ}/config.mk"
 export RUMPRUN_SHCONF="${RROBJ}/config.sh"
+export RUMPRUN_BAKE="${RRDEST}/bin/rumprun-bake"
+export RUMPRUN_CC="${RRDEST}/bin/${TOOLTUPLE}-gcc"
+export RUMPRUN_CXX="${RRDEST}/bin/${TOOLTUPLE}-g++"
+export RUMPRUN="${RRDEST}/bin/rumprun"
+export RUMPSTOP="${RRDEST}/bin/rumpstop"
+EOF
+	cat > "${RROBJ}/config-PATH.sh" << EOF
+export PATH="${RRDEST}/bin:\${PATH}"
 EOF
 	export RUMPRUN_MKCONF="${RROBJ}/config.mk"
+
+	probeprereqs
 
 	cat >> ${RUMPTOOLS}/mk.conf << EOF
 .if defined(LIB) && \${LIB} == "pthread"
@@ -332,10 +426,15 @@ EOF
 	echo '>>'
 }
 
-builduserspace ()
+buildapptools ()
 {
+
 	${MAKE} -C app-tools BUILDRR=true
 	${MAKE} -C app-tools BUILDRR=true install
+}
+
+builduserspace ()
+{
 
 	usermtree ${STAGING}
 
@@ -435,14 +534,11 @@ dobuild ()
 	mkdir -p ${STAGING}/rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}\
 	    || die cannot create libdir
 
+	${KERNONLY} || buildapptools
 	${MAKE} -C ${PLATFORMDIR} links
-
 	${KERNONLY} || builduserspace
 
 	buildpci
-
-	# run routine specified in platform.conf
-	doextras || die 'platforms extras failed.  tillerman needs tea?'
 
 	# do final build of the platform bits
 	( cd ${PLATFORMDIR} \
@@ -522,6 +618,9 @@ if ${DObuild}; then
 fi
 if ${DOinstall}; then
 	printf ">> installed to \"%s\"\n" ${RRDEST}
+	echo '>>'
+	echo '>> Set tooldir to front of $PATH (bourne-style shells)'
+	echo ". \"${RROBJ}/config-PATH.sh\""
 fi
 echo '>>'
 echo ">> $0 ran successfully"

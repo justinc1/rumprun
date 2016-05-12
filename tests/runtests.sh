@@ -25,10 +25,7 @@
 # SUCH DAMAGE.
 #
 
-[ -n "${RUMPRUN_SHCONF}" ] || { echo '>> need RUMPRUN_SHCONF'; exit 1; }
-. "${RUMPRUN_SHCONF}"
-
-export PATH="${PATH}:${RRDEST}/bin"
+[ -n "${RUMPRUN}" ] || { echo '>> need RUMPRUN set in env'; exit 1; }
 
 cd $(dirname $0) || die 'could not enter test dir'
 
@@ -37,7 +34,7 @@ export RUMPRUN_WARNING_STFU=please
 
 # TODO: use a more scalable way of specifying tests
 TESTS='hello/hello.bin basic/ctor_test.bin basic/pthread_test.bin
-	basic/tls_test.bin basic/misc_test.bin crypto/md5.bin'
+	basic/tls_test.bin basic/misc_test.bin'
 [ -x hello/hellopp.bin ] && TESTS="${TESTS} hello/hellopp.bin"
 
 STARTMAGIC='=== FOE RUMPRUN 12345 TES-TER 54321 ==='
@@ -77,7 +74,7 @@ runguest ()
 	# img2=$3
 
 	[ -n "${img1}" ] || die runtest without a disk image
-	cookie=$(rumprun ${OPT_SUDO} ${STACK} -b ${img1} ${testprog} __test)
+	cookie=$(${RUMPRUN} ${OPT_SUDO} ${STACK} -b ${img1} ${testprog} __test)
 	if [ $? -ne 0 -o -z "${cookie}" ]; then
 		TEST_RESULT=ERROR
 		TEST_ECODE=-2
@@ -108,7 +105,7 @@ runguest ()
 			sleep 1
 		done
 
-		rumpstop ${OPT_SUDO} ${cookie}
+		${RUMPSTOP} ${OPT_SUDO} ${cookie}
 	fi
 
 	echo ">> Result: ${TEST_RESULT} (${TEST_ECODE})"

@@ -1,5 +1,6 @@
 /*-
- * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2016 Antti Kantee <pooka@fixup.fi>
+ * All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,60 +24,39 @@
  * SUCH DAMAGE.
  */
 
-#include <bmk-core/mainthread.h>
-#include <bmk-core/printf.h>
+#include <sys/types.h>
 
-#include <rumprun-base/config.h>
-#include <rumprun-base/rumprun.h>
+#include <bmk-core/core.h>
+#include <bmk-core/sched.h>
 
-/*
- * for baking multiple executables into a single binary
- * TODO: remove hardcoded limit
- */
-mainlike_fn rumprun_notmain;
-mainlike_fn rumprun_main1;
-mainlike_fn rumprun_main2;
-mainlike_fn rumprun_main3;
-mainlike_fn rumprun_main4;
-mainlike_fn rumprun_main5;
-mainlike_fn rumprun_main6;
-mainlike_fn rumprun_main7;
-mainlike_fn rumprun_main8;
+#include <rump/rump.h>
+#include <rump/rumpfs.h>
+#include <rump/rump_syscalls.h>
 
-#define RUNMAIN(i)							\
-	if (rumprun_main##i == rumprun_notmain)				\
-		break;							\
-	rumprun(rre->rre_flags, rumprun_main##i,			\
-	    rre->rre_argc, rre->rre_argv);				\
-	if ((rre->rre_flags & RUMPRUN_EXEC_CMDLINE) == 0)		\
-		rre = TAILQ_NEXT(rre, rre_entries);			\
-	if (rre == NULL) {						\
-		bmk_printf("out of argv entries\n");			\
-		break;							\
-	}
+#include <rumprun/platefs.h>
 
 void
-bmk_mainthread(void *cmdline)
+rumprun_platefs(const char **dirs, size_t ndirs,
+	struct rumprun_extfile *refs, size_t nrefs)
 {
-	struct rumprun_exec *rre;
-	void *cookie;
+	unsigned i;
+	int fd;
 
-	rumprun_boot(cmdline);
+	for (i = 0; i < ndirs; i++) {
+		if (rump_sys_mkdir(dirs[i], 0777) == -1) {
+			if (*bmk_sched_geterrno() != RUMP_EEXIST)
+				bmk_platform_halt("platefs: mkdir");
+		}
+	}
 
-	rre = TAILQ_FIRST(&rumprun_execs);
-	do {
-		RUNMAIN(1);
-		RUNMAIN(2);
-		RUNMAIN(3);
-		RUNMAIN(4);
-		RUNMAIN(5);
-		RUNMAIN(6);
-		RUNMAIN(7);
-		RUNMAIN(8);
-	} while (/*CONSTCOND*/0);
 
-	while ((cookie = rumprun_get_finished()))
-		rumprun_wait(cookie);
-
-	rumprun_reboot();
+	for (i = 0; i < nrefs; i++) {
+		if ((fd = rump_sys_open(refs[i].ref_fname,
+		    RUMP_O_CREAT | RUMP_O_RDWR | RUMP_O_EXCL, 0777)) == -1)
+			bmk_platform_halt("platefs: open");
+		if (rump_sys_fcntl(fd, RUMPFS_FCNTL_EXTSTORAGE_ADD,
+		    &refs[i].ref_es) == -1)
+			bmk_platform_halt("platefs: fcntl");
+		rump_sys_close(fd);
+	}
 }

@@ -45,18 +45,18 @@ test_apptools()
 
 	case ${PLATFORM} in
 	hw)
-		RUMPBAKE="rumprun-bake hw_generic"
+		RUMPBAKE_PLATFORM='hw_generic'
 		;;
 	xen)
-		RUMPBAKE="rumprun-bake xen_pv"
+		RUMPBAKE_PLATFORM='xen_pv'
 		;;
 	*)
 		echo ">> unknown platform \"$PLATFORM\""
 		exit 1
 	esac
 
-	export PATH="${PATH}:${RRDEST}/bin"
-	export RUMPBAKE
+	export PATH="${RRDEST}/bin:${PATH}"
+	export RUMPBAKE_PLATFORM
 
 	make
 

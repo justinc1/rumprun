@@ -9,17 +9,25 @@ The former allows existing, unmodified POSIX applications to run
 out-of-the-box, while the latter allows building highly customized
 solutions with minimal footprints.
 
+The Rumprun unikernel supports applications written in, for example
+but not limited to: _C_, _C++_, _Erlang_, _Go_, _Javascript (node.js)_,
+_Python_, _Ruby_ and _Rust_.
+
+You will find ready-made software packages for Rumprun from the
+[rumprun-packages repository](http://repo.rumpkernel.org/rumprun-packages).
+Some examples of software available from there includes _LevelDB_,
+_Memcached_, _nanomsg_, _Nginx_ and _Redis_.  See the packages repository
+for further details.
+
 See the [wiki](http://wiki.rumpkernel.org/Repo:-rumprun) for more
 information and instructions.
 
-Some of our tools will throw a warning about them
+Note: some of our tools will throw a warning about them
 being experimental.  It does not mean that they
-are not expected to produce a working result.  The wiki
+are not expected to produce a working result, just that the usage
+is not necessarily final.  The wiki
 [explains](http://wiki.rumpkernel.org/Repo%3A-rumprun#experimental-nature)
 further.
-
-You will find software packages for rumprun from the
-[rumprun-packages repository](http://repo.rumpkernel.org/rumprun-packages).
 
 hw
 --

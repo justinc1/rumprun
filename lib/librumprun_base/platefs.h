@@ -1,5 +1,6 @@
 /*-
- * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2016 Antti Kantee <pooka@fixup.fi>
+ * All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,60 +24,17 @@
  * SUCH DAMAGE.
  */
 
-#include <bmk-core/mainthread.h>
-#include <bmk-core/printf.h>
+#ifndef _RUMPRUN_GENFS_H_
+#define _RUMPRUN_GENFS_H_
 
-#include <rumprun-base/config.h>
-#include <rumprun-base/rumprun.h>
+#include <rump/rumpfs.h>
 
-/*
- * for baking multiple executables into a single binary
- * TODO: remove hardcoded limit
- */
-mainlike_fn rumprun_notmain;
-mainlike_fn rumprun_main1;
-mainlike_fn rumprun_main2;
-mainlike_fn rumprun_main3;
-mainlike_fn rumprun_main4;
-mainlike_fn rumprun_main5;
-mainlike_fn rumprun_main6;
-mainlike_fn rumprun_main7;
-mainlike_fn rumprun_main8;
+struct rumprun_extfile {
+        const char *ref_fname;
+        struct rumpfs_extstorage ref_es;
+};
 
-#define RUNMAIN(i)							\
-	if (rumprun_main##i == rumprun_notmain)				\
-		break;							\
-	rumprun(rre->rre_flags, rumprun_main##i,			\
-	    rre->rre_argc, rre->rre_argv);				\
-	if ((rre->rre_flags & RUMPRUN_EXEC_CMDLINE) == 0)		\
-		rre = TAILQ_NEXT(rre, rre_entries);			\
-	if (rre == NULL) {						\
-		bmk_printf("out of argv entries\n");			\
-		break;							\
-	}
+void	rumprun_platefs(const char **, size_t,
+			struct rumprun_extfile *, size_t);
 
-void
-bmk_mainthread(void *cmdline)
-{
-	struct rumprun_exec *rre;
-	void *cookie;
-
-	rumprun_boot(cmdline);
-
-	rre = TAILQ_FIRST(&rumprun_execs);
-	do {
-		RUNMAIN(1);
-		RUNMAIN(2);
-		RUNMAIN(3);
-		RUNMAIN(4);
-		RUNMAIN(5);
-		RUNMAIN(6);
-		RUNMAIN(7);
-		RUNMAIN(8);
-	} while (/*CONSTCOND*/0);
-
-	while ((cookie = rumprun_get_finished()))
-		rumprun_wait(cookie);
-
-	rumprun_reboot();
-}
+#endif /* _RUMPRUN_GENFS_H_ */

@@ -20,8 +20,10 @@ bmk_time_t cpu_clock_now(void);
 bmk_time_t cpu_clock_epochoffset(void);
 
 void isr(int);
-int intr_init(void);
-int bmk_isr_init(int (*)(void *), void *, int);
+void intr_init(void);
+void bmk_isr_rumpkernel(int (*)(void *), void *, int, int);
+
+#define BMK_INTR_ROUTED 0x01
 
 #define BMK_MULTIBOOT_CMDLINE_SIZE 4096
 extern char multiboot_cmdline[];

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2016 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,60 +23,38 @@
  * SUCH DAMAGE.
  */
 
-#include <bmk-core/mainthread.h>
-#include <bmk-core/printf.h>
+#include <sys/param.h>
+#include <sys/syscall.h>
 
-#include <rumprun-base/config.h>
-#include <rumprun-base/rumprun.h>
+#include "rump_private.h"
 
-/*
- * for baking multiple executables into a single binary
- * TODO: remove hardcoded limit
- */
-mainlike_fn rumprun_notmain;
-mainlike_fn rumprun_main1;
-mainlike_fn rumprun_main2;
-mainlike_fn rumprun_main3;
-mainlike_fn rumprun_main4;
-mainlike_fn rumprun_main5;
-mainlike_fn rumprun_main6;
-mainlike_fn rumprun_main7;
-mainlike_fn rumprun_main8;
+extern sy_call_t sys_mmap;
+extern sy_call_t sys_munmap;
+extern sy_call_t sys___msync13;
+extern sy_call_t sys_mincore;
+extern sy_call_t sys_madvise;
+extern sy_call_t sys_mprotect;
+extern sy_call_t sys_mlock;
+extern sy_call_t sys_mlockall;
+extern sy_call_t sys_munlock;
+extern sy_call_t sys_munlockall;
 
-#define RUNMAIN(i)							\
-	if (rumprun_main##i == rumprun_notmain)				\
-		break;							\
-	rumprun(rre->rre_flags, rumprun_main##i,			\
-	    rre->rre_argc, rre->rre_argv);				\
-	if ((rre->rre_flags & RUMPRUN_EXEC_CMDLINE) == 0)		\
-		rre = TAILQ_NEXT(rre, rre_entries);			\
-	if (rre == NULL) {						\
-		bmk_printf("out of argv entries\n");			\
-		break;							\
-	}
+#define ENTRY(name) { SYS_##name, sys_##name },
+static const struct rump_onesyscall mysys[] = {
+	ENTRY(mmap)
+	ENTRY(munmap)
+	ENTRY(__msync13)
+	ENTRY(mincore)
+	ENTRY(mprotect)
+	ENTRY(mlock)
+	ENTRY(mlockall)
+	ENTRY(munlock)
+	ENTRY(munlockall)
+};
+#undef ENTRY
 
-void
-bmk_mainthread(void *cmdline)
+RUMP_COMPONENT(RUMP_COMPONENT_SYSCALL)
 {
-	struct rumprun_exec *rre;
-	void *cookie;
 
-	rumprun_boot(cmdline);
-
-	rre = TAILQ_FIRST(&rumprun_execs);
-	do {
-		RUNMAIN(1);
-		RUNMAIN(2);
-		RUNMAIN(3);
-		RUNMAIN(4);
-		RUNMAIN(5);
-		RUNMAIN(6);
-		RUNMAIN(7);
-		RUNMAIN(8);
-	} while (/*CONSTCOND*/0);
-
-	while ((cookie = rumprun_get_finished()))
-		rumprun_wait(cookie);
-
-	rumprun_reboot();
+	rump_syscall_boot_establish(mysys, __arraycount(mysys));
 }
