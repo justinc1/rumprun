@@ -8,7 +8,9 @@ CFLAGS+=	${BUILDRUMP_TOOL_CFLAGS}
 TARGETS=	rumpkernlibs
 # compiler_rt is strictly speaking necessary only in KERNONLY=true,
 # but building it always makes testing kernonly easier
+ifeq (${RUMPKERNEL},netbsd)
 TARGETS+=	compiler_rt
+endif
 INSTALLTGTS+=	librumpkern_bmktc_install
 INSTALLTGTS+=	librumpkern_mman_install
 

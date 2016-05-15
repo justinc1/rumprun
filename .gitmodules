@@ -9,3 +9,6 @@
 	path = lkl-linux
 	url = git://github.com/thehajime/lkl-linux
 	ignore = dirty
+[submodule "musl"]
+	path = musl
+	url = git://github.com/libos-nuse/musl.git

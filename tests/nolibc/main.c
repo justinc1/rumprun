@@ -8,7 +8,10 @@
 #include <rump/rump.h>
 #ifdef LINUX_RUMP
 #include <linux/reboot.h>
-#include <linux/rump_syscalls.h>
+#include <lkl.h>
+#define rump_sys_write lkl_sys_write
+#define rump_sys_open lkl_sys_open
+#define rump_sys_reboot lkl_sys_reboot
 #else
 #include <rump/rump_syscalls.h>
 #endif

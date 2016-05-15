@@ -3,10 +3,11 @@ include ${BUILDRUMP_TOOLFLAGS}
 
 CFLAGS+=	${BUILDRUMP_TOOL_CFLAGS}
 
-LDFLAGS:= -L$(abspath ../../rumprun/rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM})
+LDFLAGS:= -L${RRDEST}/rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}
 LDFLAGS+= -L${RROBJ}/lib/libcompiler_rt
 
-CPPFLAGS+= -I../../include -I../../rumprun/rumprun-${MACHINE_GNU_ARCH}/include
+CPPFLAGS+= -I../../include -I${RRDEST}/rumprun-${MACHINE_GNU_ARCH}/include
+CPPFLAGS+= -I../../include -I${RRDEST}/usr/include
 CPPFLAGS+= -I../../platform/${PLATFORM}/include
 
 LDSCRIPT= ${RROBJ}/bmk.ldscript
@@ -22,11 +23,12 @@ LIB_RUMP_PCI= -lrumpdev_pci_virtio -lrumpdev_virtio_if_vioif -lrumpdev_pci -lrum
 LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET) $(LIB_RUMP_PCI)
 
 # Linux libos
-LINUX?=no
-ifeq (${LINUX},yes)
+ifeq (${RUMPKERNEL},linux)
 CFLAGS+= -g -O0 -DLINUX_RUMP
-LIB_RUMP=-llinux
+LIB_RUMP=-llkl
 LIB_RUMP+=-lrumpdev_linux_pci
+else
+LIB_RUMP+=-lcompiler_rt
 endif
 
 .PHONY: clean
@@ -43,7 +45,6 @@ ${KERNELS}: ${OBJS}
 	$< ${RROBJ}/rumprun.o						\
 	-nostdlib							\
 	-Wl,--whole-archive ${LIB_RUMP} -Wl,--no-whole-archive		\
-	-lcompiler_rt 							\
 	-o $@
 
 clean:

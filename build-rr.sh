@@ -49,7 +49,7 @@ helpme ()
 	printf "\t-o: use non-default object directory\n"
 	printf "\t-k: build kernel only, without libc or tools\n"
 	printf "\t-s: specify alternative src-netbsd location\n\n"
-	printf "\t-l: build Linux kernel as an alternative to netbsd rump kernel\n\n"
+	printf "\t-r: type of rump kernel [netbsd|linux]. default netbsd\n\n\n"
 	printf "\tbuildrump.sh opts are passed to buildrump.sh\n"
 	printf "\n"
 	printf "The toolchain is picked up from the environment.  See the\n"
@@ -97,18 +97,15 @@ parseargs ()
 	KERNONLY=false
 	RROBJ=
 	RUMPSRC=src-netbsd
-	LINUXSRC=lkl-linux
+	LKLSRC=lkl-linux
 	STDJ=-j4
 	EXTSRC=
-	linux_cmdopt=
-	linux_bldopt=
-	BUILDLINUX=false
 
 	DObuild=false
 	DOinstall=false
 
 	orignargs=$#
-	while getopts '?d:hj:klo:qs:' opt; do
+	while getopts '?d:hj:kr:o:qs:' opt; do
 		case "$opt" in
 		'j')
 			[ -z "$(echo ${OPTARG} | tr -d '[0-9]')" ] \
@@ -121,10 +118,14 @@ parseargs ()
 		'k')
 			KERNONLY=true
 			;;
-		'l')
-			linux_cmdopt="-l ${LINUXSRC}"
-			linux_bldopt="linuxbuild"
-			BUILDLINUX=true
+		'r')
+			RUMPKERNEL="${OPTARG}"
+			if [ ${RUMPKERNEL} != "netbsd" -a ${RUMPKERNEL} != "linux" ]; then
+				echo '>> ERROR:'
+				echo '>> -r option (RUMPKERNEL) must be netbsd or linux'
+				exit 1
+			fi
+			. rumpkernel/${RUMPKERNEL}.sh
 			;;
 		'o')
 			RROBJ="${OPTARG}"
@@ -307,7 +308,8 @@ setvars ()
 	abspath RRDEST
 	abspath RROBJ
 	abspath RUMPSRC
-	abspath LINUXSRC
+	abspath LKLSRC
+	export RROBJ
 }
 
 checktools ()
@@ -353,78 +355,6 @@ checktools ()
 	fi
 }
 
-buildrump ()
-{
-
-	checktools
-	checkprevbuilds
-
-	extracflags=
-	[ "${MACHINE_GNU_ARCH}" = "x86_64" ] \
-	    && extracflags='-F CFLAGS=-mno-red-zone'
-
-	# build tools
-	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
-	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
-	    -V MKPIC=no -V RUMP_CURLWP=__thread				\
-	    -V RUMP_KERNEL_IS_LIBC=1 -V BUILDRUMP_SYSROOT=yes		\
-	    ${extracflags} "$@" tools
-
-	echo '>>'
-	echo '>> Now that we have the appropriate tools, performing'
-	echo '>> further setup for rumprun build'
-	echo '>>'
-
-	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
-
-	TOOLTUPLE=$(${RUMPMAKE} -f bsd.own.mk \
-	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-netbsd/}')
-
-	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
-	    || HAVECXX=true
-
-	makeconfig ${RROBJ}/config.mk ''
-	makeconfig ${RROBJ}/config.sh \"
-	# XXX: gcc is hardcoded
-	cat > ${RROBJ}/config << EOF
-export RUMPRUN_MKCONF="${RROBJ}/config.mk"
-export RUMPRUN_SHCONF="${RROBJ}/config.sh"
-export RUMPRUN_BAKE="${RRDEST}/bin/rumprun-bake"
-export RUMPRUN_CC="${RRDEST}/bin/${TOOLTUPLE}-gcc"
-export RUMPRUN_CXX="${RRDEST}/bin/${TOOLTUPLE}-g++"
-export RUMPRUN="${RRDEST}/bin/rumprun"
-export RUMPSTOP="${RRDEST}/bin/rumpstop"
-EOF
-	cat > "${RROBJ}/config-PATH.sh" << EOF
-export PATH="${RRDEST}/bin:\${PATH}"
-EOF
-	export RUMPRUN_MKCONF="${RROBJ}/config.mk"
-
-	probeprereqs
-
-	cat >> ${RUMPTOOLS}/mk.conf << EOF
-.if defined(LIB) && \${LIB} == "pthread"
-.PATH:  $(pwd)/lib/librumprun_base/pthread
-PTHREAD_MAKELWP=pthread_makelwp_rumprun.c
-CPPFLAGS.pthread_makelwp_rumprun.c= -I$(pwd)/include
-.endif  # LIB == pthread
-EOF
-	[ -z "${PLATFORM_MKCONF}" ] \
-	    || echo "${PLATFORM_MKCONF}" >> ${RUMPTOOLS}/mk.conf
-
-	echo "RUMPRUN_TUPLE=${TOOLTUPLE}" >> ${RUMPTOOLS}/mk.conf
-
-	# build rump kernel
-	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
-	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
-	    ${linux_cmdopt}						\
-	    "$@" build kernelheaders ${linux_bldopt} install
-
-	echo '>>'
-	echo '>> Rump kernel components built.  Proceeding to build'
-	echo '>> rumprun bits'
-	echo '>>'
-}
 
 buildapptools ()
 {
@@ -433,45 +363,6 @@ buildapptools ()
 	${MAKE} -C app-tools BUILDRR=true install
 }
 
-builduserspace ()
-{
-
-	usermtree ${STAGING}
-
-	LIBS="$(stdlibs ${RUMPSRC})"
-	! ${HAVECXX} || LIBS="${LIBS} $(stdlibsxx ${RUMPSRC})"
-
-	userincludes ${RUMPSRC} ${LIBS} $(pwd)/lib/librumprun_tester
-	for lib in ${LIBS}; do
-		makeuserlib ${lib}
-	done
-}
-
-buildpci ()
-{
-
-	if eval ${PLATFORM_PCI_P}; then
-		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} obj
-		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} dependall
-		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} install
-	fi
-
-	if ${BUILDLINUX} ; then
-		abspath BROBJ
-		abspath STAGING
-
-		HYPERCALLS=
-		if [ ${PLATFORM} = "hw" ] ; then
-			HYPERCALLS="${BROBJ}/sys/rump/dev/lib/libpci/rumppci.o ${BROBJ}/sys/rump/dev/lib/libpci/rumpdma.o"
-		else
-			HYPERCALLS="${BROBJ}/sys/rump/dev/lib/libpci/rumphyper_pci.o ${BROBJ}/sys/rump/dev/lib/libpci/rumphyper_dma.o"
-		fi
-		make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LINUXSRC}/arch/lkl/drivers/
-		make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LINUXSRC}/arch/lkl/drivers/ \
-		     DESTDIR=${STAGING} install
-	fi
-
-}
 
 wraponetool ()
 {
@@ -501,6 +392,7 @@ makeconfig ()
 	echo "TOOLTUPLE=${quote}${TOOLTUPLE}${quote}" >> ${1}
 	echo "KERNONLY=${quote}${KERNONLY}${quote}" >> ${1}
 	echo "PLATFORM=${quote}${PLATFORM}${quote}" >> ${1}
+	echo "RUMPKERNEL=${quote}${RUMPKERNEL}${quote}" >> ${1}
 
 	echo "RRDEST=${quote}${RRDEST}${quote}" >> ${1}
 	echo "RROBJ=${quote}${RROBJ}${quote}" >> ${1}
@@ -570,8 +462,8 @@ doinstall ()
 		rm -rf lib/pkgconfig
 		find lib -maxdepth 1 -name librump\*.a \
 		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
-		if ${BUILDLINUX} ; then
-		    find lib -maxdepth 1 -name liblinux.a \
+		if [ ${RUMPKERNEL} = "linux" ] ; then
+		    find usr/lib -maxdepth 1 -name liblkl.a \
 			 -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
 		fi
 		find lib -maxdepth 1 -name \*.a \

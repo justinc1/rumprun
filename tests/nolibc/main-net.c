@@ -11,11 +11,28 @@
 #include <linux/time.h>
 #define AF_INET6 10
 
-#include <linux/rump_syscalls.h>
+#include <lkl.h>
+#define rump_sys_write lkl_sys_write
+#define rump_sys_open lkl_sys_open
+#define rump_sys_reboot lkl_sys_reboot
+#define rump_sys_socket lkl_sys_socket
 
-int lkl_if_up(int ifindex);
-int lkl_if_set_ipv4(int ifindex, unsigned int addr, unsigned int netmask_len);
-int lkl_sys_socket(int, int, int);
+ssize_t rump_sys_sendto(int fd, const void *buf, size_t len, int flags,
+			const struct sockaddr *addr, socklen_t addrlen);
+ssize_t rump_sys_sendto(int fd, const void *buf, size_t len, int flags,
+			const struct sockaddr *addr, socklen_t addrlen)
+{
+	return lkl_sys_sendto(fd, (void *)buf, len, flags,
+			      (struct __lkl__kernel_sockaddr_storage *)addr, addrlen);
+}
+
+int rump_sys_nanosleep(struct timespec *s, struct timespec *p);
+int rump_sys_nanosleep(struct timespec *s, struct timespec *p)
+{
+	return lkl_sys_nanosleep((struct lkl_timespec *)s,
+				 (struct lkl_timespec *)p);
+}
+
 
 #else
 #include <rump/rump_syscalls.h>
@@ -53,7 +70,7 @@ send_packet(void)
 #ifdef LINUX_RUMP
 	lkl_if_up(1);		/* lo */
 	lkl_if_up(2);		/* eth0 */
-	lkl_if_set_ipv4(2, 0x0100000a, 24);/* 10.0.0.1 */
+	lkl_if_set_ipv4(2, 0x0200010a, 24);/* 10.1.0.2 */
 #else
 	int rv;
 	/* Virtio ether */
@@ -75,7 +92,7 @@ send_packet(void)
 		return;
 	}
 
-	long dest = 0x0200000a; /* 10.0.0.2 */
+	long dest = 0x0100010a; /* 10.1.0.1 */
 
 	bmk_memset(&sin, 0, sizeof(sin));
 #ifndef LINUX_RUMP
