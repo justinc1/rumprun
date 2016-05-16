@@ -23,7 +23,7 @@ cd $(dirname $0)
 echo "=== test main.elf ==="
 qemu-system-x86_64 -net nic,model=virtio -no-kvm -m 512 -kernel main.elf -s -nographic -vga none </dev/null &> log.txt &
 #rumprun qemu -M 512 -g "-nographic -vga none" -i main.elf </dev/null &> log.txt &
-sleep 3
+sleep 30
 pkill qemu || echo "ignore errors"
 cat log.txt
 
@@ -37,7 +37,7 @@ rm -f log.txt
 #sudo ifconfig tap0 up
 qemu-system-x86_64 -net nic,model=virtio -no-kvm -m 512 -kernel main-net.elf -s -nographic -vga none </dev/null &> log.txt &
 
-sleep 3
+sleep 30
 pkill qemu || echo "ignore errors"
 cat log.txt
 
