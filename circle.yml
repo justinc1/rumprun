@@ -24,7 +24,7 @@ test:
   override:
     - ./build-rr.sh -o myobj -j16 -qq ${KERNONLY} ${LINUX} ${PLATFORM} ${EXTRAFLAGS}:
         parallel: true
-    - RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY} ${LINUX}:
+    - RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY}:
         parallel: true
     - RUMPRUN_SHCONF=./myobj/config.sh ./tests/runtests.sh ${TESTS}:
         parallel: true
