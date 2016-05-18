@@ -25,6 +25,7 @@ LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET) $(LIB_RUMP_PCI)
 # Linux libos
 ifeq (${RUMPKERNEL},linux)
 CFLAGS+= -g -O0 -DLINUX_RUMP
+LDFLAGS+= -L${RRDEST}/usr/lib
 LIB_RUMP=-llkl
 LIB_RUMP+=-lrumpdev_linux_pci
 else

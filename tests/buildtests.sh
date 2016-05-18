@@ -12,7 +12,6 @@ set -e
 TESTMODE=apptools
 TESTCONFIGURE=true
 TESTCMAKE=$(which cmake || echo "")
-LINUX=
 
 while getopts 'kqh' opt; do
 	case "$opt" in

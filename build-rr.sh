@@ -97,6 +97,7 @@ parseargs ()
 	KERNONLY=false
 	RROBJ=
 	RUMPSRC=src-netbsd
+	RUMPKERNEL=netbsd
 	LKLSRC=lkl-linux
 	STDJ=-j4
 	EXTSRC=
@@ -125,7 +126,6 @@ parseargs ()
 				echo '>> -r option (RUMPKERNEL) must be netbsd or linux'
 				exit 1
 			fi
-			. rumpkernel/${RUMPKERNEL}.sh
 			;;
 		'o')
 			RROBJ="${OPTARG}"
@@ -189,6 +189,13 @@ parseargs ()
 	if ${dodefault}; then
 		DObuild=true
 		DOinstall=true
+	fi
+
+	. rumpkernel/${RUMPKERNEL}.sh
+	if [ ${RUMPKERNEL} = "netbsd" ] ; then
+		RUMPSRC=src-netbsd
+	else
+		RUMPSRC=lkl-linux
 	fi
 
 	case ${RUMPSRC} in
@@ -355,6 +362,77 @@ checktools ()
 	fi
 }
 
+buildrump ()
+{
+
+	checktools
+	checkprevbuilds
+
+	extracflags=
+	[ "${MACHINE_GNU_ARCH}" = "x86_64" ] \
+	    && extracflags='-F CFLAGS=-mno-red-zone'
+
+	# build tools
+	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
+	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
+	    -V MKPIC=no -V RUMP_CURLWP=__thread				\
+	    -V RUMP_KERNEL_IS_LIBC=1 -V BUILDRUMP_SYSROOT=yes		\
+	    ${extracflags} -l ${RUMPKERNEL} "$@" tools
+
+	echo '>>'
+	echo '>> Now that we have the appropriate tools, performing'
+	echo '>> further setup for rumprun build'
+	echo '>>'
+
+	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
+
+	TOOLTUPLE=$(${RUMPMAKE} -f bsd.own.mk \
+	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-netbsd/}')
+
+	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
+	    || HAVECXX=true
+
+	makeconfig ${RROBJ}/config.mk ''
+	makeconfig ${RROBJ}/config.sh \"
+	# XXX: gcc is hardcoded
+	cat > ${RROBJ}/config << EOF
+export RUMPRUN_MKCONF="${RROBJ}/config.mk"
+export RUMPRUN_SHCONF="${RROBJ}/config.sh"
+export RUMPRUN_BAKE="${RRDEST}/bin/rumprun-bake"
+export RUMPRUN_CC="${RRDEST}/bin/${TOOLTUPLE}-gcc"
+export RUMPRUN_CXX="${RRDEST}/bin/${TOOLTUPLE}-g++"
+export RUMPRUN="${RRDEST}/bin/rumprun"
+export RUMPSTOP="${RRDEST}/bin/rumpstop"
+EOF
+	cat > "${RROBJ}/config-PATH.sh" << EOF
+export PATH="${RRDEST}/bin:\${PATH}"
+EOF
+	export RUMPRUN_MKCONF="${RROBJ}/config.mk"
+
+	probeprereqs
+
+	cat >> ${RUMPTOOLS}/mk.conf << EOF
+.if defined(LIB) && \${LIB} == "pthread"
+.PATH:  $(pwd)/lib/librumprun_base/pthread
+PTHREAD_MAKELWP=pthread_makelwp_rumprun.c
+CPPFLAGS.pthread_makelwp_rumprun.c= -I$(pwd)/include
+.endif  # LIB == pthread
+EOF
+	[ -z "${PLATFORM_MKCONF}" ] \
+	    || echo "${PLATFORM_MKCONF}" >> ${RUMPTOOLS}/mk.conf
+
+	echo "RUMPRUN_TUPLE=${TOOLTUPLE}" >> ${RUMPTOOLS}/mk.conf
+
+	# build rump kernel
+	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
+	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
+	    -l ${RUMPKERNEL} "$@" build kernelheaders install
+
+	echo '>>'
+	echo '>> Rump kernel components built.  Proceeding to build'
+	echo '>> rumprun bits'
+	echo '>>'
+}
 
 buildapptools ()
 {
@@ -460,14 +538,15 @@ doinstall ()
 		# first, move things to where we want them to be
 		cd ${STAGING}
 		rm -rf lib/pkgconfig
-		find lib -maxdepth 1 -name librump\*.a \
-		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
-		if [ ${RUMPKERNEL} = "linux" ] ; then
-		    find usr/lib -maxdepth 1 -name liblkl.a \
-			 -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+		if [ ${RUMPKERNEL} = "netbsd" ] ; then
+			find lib -maxdepth 1 -name librump\*.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+			find lib -maxdepth 1 -name \*.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
+		elif [ ${RUMPKERNEL} = "linux" ] ; then
+			find usr/lib -maxdepth 1 -name liblkl.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
 		fi
-		find lib -maxdepth 1 -name \*.a \
-		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
 
 		# make sure special cases are visible everywhere
 		for x in c pthread ; do

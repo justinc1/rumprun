@@ -5,14 +5,14 @@ endif
 CPPFLAGS+=	-Iinclude -I../../include -I${RROBJ}/include -nostdinc
 CFLAGS+=	${BUILDRUMP_TOOL_CFLAGS}
 
+ifeq (${RUMPKERNEL},netbsd)
 TARGETS=	rumpkernlibs
 # compiler_rt is strictly speaking necessary only in KERNONLY=true,
 # but building it always makes testing kernonly easier
-ifeq (${RUMPKERNEL},netbsd)
 TARGETS+=	compiler_rt
-endif
 INSTALLTGTS+=	librumpkern_bmktc_install
 INSTALLTGTS+=	librumpkern_mman_install
+endif
 
 ifneq (${KERNONLY},true)
 TARGETS+=	userlibs
