@@ -16,8 +16,11 @@ buildpci ()
 {
 
 	if eval ${PLATFORM_PCI_P}; then
-		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} obj
-		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} dependall
-		${RUMPMAKE} -f ${PLATFORMDIR}/pci/Makefile.pci ${STDJ} install
+		(
+			cd ${PLATFORMDIR}/pci
+			${RUMPMAKE} ${STDJ} obj
+			${RUMPMAKE} ${STDJ} dependall
+			${RUMPMAKE} ${STDJ} install
+		)
 	fi
 }

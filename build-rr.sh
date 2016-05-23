@@ -441,7 +441,6 @@ buildapptools ()
 	${MAKE} -C app-tools BUILDRR=true install
 }
 
-
 wraponetool ()
 {
 
