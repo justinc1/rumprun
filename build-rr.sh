@@ -192,11 +192,6 @@ parseargs ()
 	fi
 
 	. rumpkernel/${RUMPKERNEL}.sh
-	if [ ${RUMPKERNEL} = "netbsd" ] ; then
-		RUMPSRC=src-netbsd
-	else
-		RUMPSRC=lkl-linux
-	fi
 
 	case ${RUMPSRC} in
 	/*)
@@ -317,6 +312,7 @@ setvars ()
 	abspath RUMPSRC
 	abspath LKLSRC
 	export RROBJ
+	export LKLSRC
 }
 
 checktools ()

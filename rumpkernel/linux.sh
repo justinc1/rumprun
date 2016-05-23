@@ -26,8 +26,8 @@ buildpci ()
 	echo '>>'
 
 	# XXX:, FIXME: LKL still needs librumpuser from src-netbsd
-	ln -s -f ${RUMPSRC}/../src-netbsd/sys/rump/include/rump/ ${STAGING}/../include/
-	cp -rpf ${RUMPSRC}/../src-netbsd/sys/rump/include/rump/ ${STAGING}/include/
+	ln -s -f ${RUMPSRC}/sys/rump/include/rump/ ${STAGING}/../include/
+	cp -rpf ${RUMPSRC}/sys/rump/include/rump/ ${STAGING}/include/
 
 	# XXX:
 	mkdir -p ${RROBJ}/rumptools/dest/usr/include/sys/
