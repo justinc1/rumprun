@@ -23,16 +23,21 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
+#ifdef __NetBSD__
 #include <sys/sysctl.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#undef NULL
 #include <pthread.h>
 #include <stdio.h>
 #include <sched.h>
@@ -40,10 +45,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <bmk-core/types.h>
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#ifdef __NetBSD__
 #include <fs/tmpfs/tmpfs_args.h>
+#endif
 
 #include <bmk-core/platform.h>
 
@@ -51,6 +59,16 @@
 #include <rumprun-base/config.h>
 
 #include "rumprun-private.h"
+
+#define	_STRING(x)	x
+
+#define	__strong_alias(alias,sym)				\
+	__asm(".global " _STRING(#alias) "\n"			\
+	      _STRING(#alias) " = " _STRING(#sym));
+
+#define	__weak_alias(alias,sym)				\
+	__asm(".weak " _STRING(#alias) "\n"		\
+	      _STRING(#alias) " = " _STRING(#sym));
 
 static pthread_mutex_t w_mtx;
 static pthread_cond_t w_cv;
@@ -79,18 +97,22 @@ int rumprun_cold = 1;
 void
 rumprun_boot(char *cmdline)
 {
+#ifdef __NetBSD__
 	struct tmpfs_args ta = {
 		.ta_version = TMPFS_ARGS_VERSION,
 		.ta_size_max = 1*1024*1024,
 		.ta_root_mode = 01777,
 	};
-	int tmpfserrno;
+	int x;
+#endif
+	int tmpfserrno = -1;
 	char *sysproxy;
-	int rv, x;
+	int rv;
 
 	rump_boot_setsigmodel(RUMP_SIGMODEL_IGNORE);
 	rump_init();
 
+#ifdef __NetBSD__
 	/* mount /tmp before we let any userspace bits run */
 	rump_sys_mount(MOUNT_TMPFS, "/tmp", 0, &ta, sizeof(ta));
 	tmpfserrno = errno;
@@ -107,6 +129,7 @@ rumprun_boot(char *cmdline)
 	 */
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
+#endif
 
 	/* print tmpfs result only after we bootstrapped userspace */
 	if (tmpfserrno == 0) {
@@ -121,9 +144,10 @@ rumprun_boot(char *cmdline)
 	 * (note: we don't check for errors since net.inet.ip.dad_count
 	 * is not present if the networking stack isn't present)
 	 */
+#ifdef __NetBSD__
 	x = 0;
 	sysctlbyname("net.inet.ip.dad_count", NULL, NULL, &x, sizeof(x));
-
+#endif
 	rumprun_config(cmdline);
 
 	sysproxy = getenv("RUMPRUN_SYSPROXY");
@@ -208,6 +232,7 @@ mainbouncer(void *arg)
 	exit(rv);
 }
 
+#ifdef __NetBSD__
 static void
 setupproc(struct rumprunner *rr)
 {
@@ -256,6 +281,7 @@ setupproc(struct rumprunner *rr)
 
 	pipein = newpipein;
 }
+#endif
 
 void *
 rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
@@ -270,7 +296,12 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 	rr->rr_argv = argv;
 	rr->rr_flags = flags; /* XXX */
 
+#ifdef __NetBSD__
 	setupproc(rr);
+#endif
+
+	/* FIXME: need to implement pthread_create for rumprun/lkl */
+	rr->rr_mainfun(rr->rr_argc, rr->rr_argv);
 
 	if (pthread_create(&rr->rr_mainthread, NULL, mainbouncer, rr) != 0) {
 		fprintf(stderr, "rumprun: running %s failed\n", argv[0]);
@@ -365,8 +396,10 @@ void __attribute__((noreturn))
 rumprun_reboot(void)
 {
 
+#ifdef __NetBSD__
 	_netbsd_userlevel_fini();
 	rump_sys_reboot(0, 0);
+#endif
 
 	bmk_platform_halt("reboot returned");
 }

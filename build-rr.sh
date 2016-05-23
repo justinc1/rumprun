@@ -42,7 +42,7 @@ helpme ()
 	printf "\n"
 	printf "\t-d: destination base directory, used by \"install\".\n"
 	printf "\t-j: run <num> make jobs simultaneously.\n"
-	printf "\t-q: quiet(er) build.  option may be specified twice.\n"
+	printf "\t-q: quiet(er) build.  option may be specified twice.\n\n"
 	printf "\tThe default actions are \"build\" and \"install\"\n\n"
 
 	printf "Expert-only options:\n"
@@ -392,6 +392,10 @@ buildrump ()
 	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
 	    || HAVECXX=true
 
+	if [ ${RUMPKERNEL} = "linux" ] ; then
+		HAVECXX=false
+	fi
+
 	makeconfig ${RROBJ}/config.mk ''
 	makeconfig ${RROBJ}/config.sh \"
 	# XXX: gcc is hardcoded
@@ -512,7 +516,7 @@ dobuild ()
 
 	# do final build of the platform bits
 	( cd ${PLATFORMDIR} \
-	    && ${MAKE} BUILDRR=true \
+	    && ${MAKE} BUILDRR=true RUMPKERNEL=${RUMPKERNEL} \
 	    && ${MAKE} BUILDRR=true install || exit 1)
 	[ $? -eq 0 ] || die platform make failed!
 }
@@ -543,17 +547,20 @@ doinstall ()
 			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
 			find lib -maxdepth 1 -name \*.a \
 			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
+
+			# make sure special cases are visible everywhere
+			for x in c pthread ; do
+				rm -f rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
+				ln -s ../lib${x}.a \
+				    rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
+			done
 		elif [ ${RUMPKERNEL} = "linux" ] ; then
-			find usr/lib -maxdepth 1 -name liblkl.a \
+			find lib -maxdepth 1 -name \*.a \
 			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+			# FIXME: need to create empty librump.a for linux
+			ar rc rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/librump.a
 		fi
 
-		# make sure special cases are visible everywhere
-		for x in c pthread ; do
-			rm -f rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
-			ln -s ../lib${x}.a \
-			    rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
-		done
 		find . -maxdepth 1 \! -path . \! -path ./include\* \
 		    | xargs tar -cf -
 	) | (cd ${RRDEST} ; tar -xf -)

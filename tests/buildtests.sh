@@ -41,7 +41,7 @@ test_apptools()
 
 	case ${PLATFORM} in
 	hw)
-		RUMPBAKE_PLATFORM='hw_generic'
+		RUMPBAKE_PLATFORM='hw_lkl'
 		;;
 	xen)
 		RUMPBAKE_PLATFORM='xen_pv'

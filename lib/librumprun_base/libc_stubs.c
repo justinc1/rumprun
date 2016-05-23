@@ -81,3 +81,8 @@ execve(const char *file, char *const argv[], char *const envp[])
 	errno = ENOTSUP;
 	return -1;
 }
+
+/* For Linux LKl */
+STUB_ERRNO(mmap);
+STUB_ERRNO(munmap);
+STUB_ERRNO(mprotect);

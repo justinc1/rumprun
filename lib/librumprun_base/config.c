@@ -30,14 +30,20 @@
  */
 
 #include <sys/param.h>
+#ifdef __NetBSD__
 #include <sys/disklabel.h>
+#else
+#include <sys/types.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#ifdef __NetBSD__
 #include <ufs/ufs/ufsmount.h>
 #include <isofs/cd9660/cd9660_mount.h>
 
 #include <dev/vndvar.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -49,7 +55,9 @@
 #include <unistd.h>
 
 #include <rump/rump.h>
+#ifdef __NetBSD__
 #include <rump/netconfig.h>
+#endif
 
 #include <rumprun-base/config.h>
 #include <rumprun-base/parseargs.h>
@@ -84,6 +92,10 @@
 		    "in \"%s\"", T_PRINTFSTAR(t,data), fun);		\
 	}								\
   } while (/*CONSTCOND*/0)
+
+#ifndef __arraycount
+#define __arraycount(_ar_) (sizeof(_ar_)/sizeof(_ar_[0]))
+#endif
 
 static char *
 token2cstr(jsmntok_t *t, char *data)
@@ -270,6 +282,7 @@ handle_hostname(jsmntok_t *t, int left, char *data)
 	return 1;
 }
 
+#ifdef __NetBSD__
 static void
 config_ipv4(const char *ifname, const char *method,
 	const char *addr, const char *mask, const char *gw)
@@ -649,6 +662,7 @@ handle_blk(jsmntok_t *t, int left, char *data)
 
 	return 2*objsize + 1;
 }
+#endif
 
 struct {
 	const char *name;
@@ -658,10 +672,13 @@ struct {
 	{ "rc_TESTING", handle_rc },
 	{ "env", handle_env },
 	{ "hostname", handle_hostname },
+#if 0
 	{ "blk", handle_blk },
 	{ "net", handle_net },
+#endif
 };
 
+#ifdef __NetBSD__
 /* don't believe we can have a >64k config */
 #define CFGMAXSIZE (64*1024)
 static char *
@@ -726,7 +743,7 @@ getcmdlinefromroot(const char *cfgname)
 	p[sb.st_size] = '\0';
 	return p;
 }
-
+#endif
 
 #define ROOTCFG "_RUMPRUN_ROOTFSCFG="
 static const size_t rootcfglen = sizeof(ROOTCFG)-1;
@@ -757,8 +774,10 @@ rumprun_config(char *cmdline)
 	/* is the config file on rootfs?  if so, mount & dig it out */
 	cfg = rumprun_config_path(cmdline);
 	if (cfg != NULL) {
+#ifdef __NetBSD__
 		cmdline = getcmdlinefromroot(cfg);
 		if (cmdline == NULL)
+#endif
 			errx(1, "could not get cfg from rootfs");
 	}
 

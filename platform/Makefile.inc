@@ -17,9 +17,11 @@ endif
 ifneq (${KERNONLY},true)
 TARGETS+=	userlibs
 INSTALLTGTS+=	librumprun_base_install librumprun_tester_install2
+ifeq (${RUMPKERNEL},netbsd)
 INSTALLTGTS+=	librumprunfs_base_install_custom
 ifeq (${CONFIG_CXX},yes)
 INSTALLTGTS+=	libunwind_install2
+endif
 endif
 endif
 
@@ -92,7 +94,11 @@ ${RROBJ}/bmk.ldscript: ${LDSCRIPT}
 	ln -sf $< $@
 
 commonlibs: platformlibs userlibs
+ifeq (${RUMPKERNEL},netbsd)
 userlibs: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a ${LIBUNWIND} ${RROBJLIB}/librumprunfs_base/librumprunfs_base.a
+else
+userlibs: ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a
+endif
 platformlibs: ${RROBJLIB}/libbmk_core/libbmk_core.a ${RROBJLIB}/libbmk_rumpuser/libbmk_rumpuser.a ${RROBJ}/bmk.ldscript
 rumpkernlibs: ${RROBJLIB}/librumpkern_bmktc/librumpkern_bmktc.a ${RROBJLIB}/librumpkern_mman/librumpkern_mman.a
 compiler_rt: ${RROBJLIB}/libcompiler_rt/libcompiler_rt.a
@@ -131,7 +137,9 @@ installuser:
 
 INSTALLTGTS+=	installkern
 ifneq (${KERNONLY},true)
+ifeq (${RUMPKERNEL},netbsd)
 INSTALLTGTS+=	installuser
+endif
 endif
 
 .PHONY: install

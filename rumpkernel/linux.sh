@@ -7,23 +7,13 @@ builduserspace ()
 	echo "=== building musl ==="
 	abspath STAGING
 	cd musl
-	LKL_HEADER="${STAGING}/"
+	LKL_HEADER="${RROBJ}/rumptools/dest/"
 	CIRCLE_TEST_REPORTS="${CIRCLE_TEST_REPORTS-./}"
 	./configure --with-lkl=${LKL_HEADER} --disable-shared --enable-debug \
-		    --disable-optimize --prefix=${STAGING}/
+		    --disable-optimize --prefix=${STAGING}/ CFLAGS="-DRUMPRUN"
 	# XXX: bug of musl Makefile ?
 	make obj/src/internal/version.h
 	make install
-	# install libraries
-# 	${INSTALL-install} -d ${STAGING}/usr/lib
-# 	${INSTALL-install} ${BROBJ}/musl/lib/libpthread.a \
-# 			   ${BROBJ}/musl/lib/libcrypt.a \
-# 			   ${BROBJ}/musl/lib/librt.a \
-# 			   ${BROBJ}/musl/lib/libm.a \
-# 			   ${BROBJ}/musl/lib/libdl.a \
-# 			   ${BROBJ}/musl/lib/libutil.a \
-# 			   ${BROBJ}/musl/lib/libresolv.a \
-# 			   ${STAGING}/usr/lib
 )
 
 }
@@ -39,6 +29,9 @@ buildpci ()
 	ln -s -f ${RUMPSRC}/../src-netbsd/sys/rump/include/rump/ ${STAGING}/../include/
 	cp -rpf ${RUMPSRC}/../src-netbsd/sys/rump/include/rump/ ${STAGING}/include/
 
+	# XXX:
+	mkdir -p ${RROBJ}/rumptools/dest/usr/include/sys/
+	cp include/bmk-core/queue.h ${RROBJ}/rumptools/dest/usr/include/sys/
 
 	CFLAGS="-I ./include -I ${PLATFORMDIR}/include/ -I ${RUMPTOOLS}/../include/ -I${LKLSRC}/arch/lkl/drivers"
 	abspath BROBJ
@@ -56,6 +49,6 @@ buildpci ()
 	fi
 	make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LKLSRC}/arch/lkl/drivers/
 	make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LKLSRC}/arch/lkl/drivers/ \
-	     DESTDIR=${STAGING}/usr install
+	     DESTDIR=${RROBJ}/rumptools/dest/usr install
 
 }
