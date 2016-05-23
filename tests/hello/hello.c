@@ -5,7 +5,7 @@
 
 #include <rumprun/tester.h>
 
-#if !defined(__linux__) || defined(__NetBSD__)
+#if !defined(__linux__) && !defined(__NetBSD__)
 # error compiler wrapper fail
 #endif
 

@@ -37,7 +37,9 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#ifdef __linux__
 #undef NULL
+#endif
 #include <pthread.h>
 #include <stdio.h>
 #include <sched.h>
@@ -60,6 +62,7 @@
 
 #include "rumprun-private.h"
 
+#ifdef __linux__
 #define	_STRING(x)	x
 
 #define	__strong_alias(alias,sym)				\
@@ -69,6 +72,7 @@
 #define	__weak_alias(alias,sym)				\
 	__asm(".weak " _STRING(#alias) "\n"		\
 	      _STRING(#alias) " = " _STRING(#sym));
+#endif
 
 static pthread_mutex_t w_mtx;
 static pthread_cond_t w_cv;

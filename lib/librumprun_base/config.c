@@ -53,6 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <rump/rump.h>
 #ifdef __NetBSD__
@@ -672,7 +673,7 @@ struct {
 	{ "rc_TESTING", handle_rc },
 	{ "env", handle_env },
 	{ "hostname", handle_hostname },
-#if 0
+#ifdef __NetBSD__
 	{ "blk", handle_blk },
 	{ "net", handle_net },
 #endif
