@@ -22,12 +22,12 @@ dependencies:
 
 test:
   override:
-    # FIXME: only test kernonly (node=2)
-    - if [ $CIRCLE_NODE_INDEX -eq 2 ] ; then ./build-rr.sh -o myobj -j16 -qq ${KERNONLY} ${LINUX} ${PLATFORM} ${EXTRAFLAGS} ; fi:
+    - ./build-rr.sh -o myobj -j16 -qq ${KERNONLY} ${RUMPKERN} ${PLATFORM} ${EXTRAFLAGS}:
         parallel: true
-    - if [ $CIRCLE_NODE_INDEX -eq 2 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY} ; fi:
+    # FIXME: only test kernonly (node=2)
+    - if [ $CIRCLE_NODE_INDEX -eq 2 || $CIRCLE_NODE_INDEX -eq 3 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY} ; fi:
         parallel: true
     - if [ $CIRCLE_NODE_INDEX -eq 2 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh ./tests/runtests.sh ${TESTS} ; fi:
         parallel: true
-    - if [ $CIRCLE_NODE_INDEX -eq 2 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk sh -x ./tests/nolibc/test-nolibc.sh ${KERNONLY} ; fi:
+    - if [ $CIRCLE_NODE_INDEX -eq 2 || $CIRCLE_NODE_INDEX -eq 3 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk sh -x ./tests/nolibc/test-nolibc.sh ${KERNONLY} ; fi:
         parallel: true
