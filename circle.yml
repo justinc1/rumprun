@@ -25,7 +25,7 @@ test:
     - ./build-rr.sh -o myobj -j16 -qq ${KERNONLY} ${RUMPKERN} ${PLATFORM} ${EXTRAFLAGS}:
         parallel: true
     # FIXME: only test kernonly (node=2)
-    - if [ $CIRCLE_NODE_INDEX -eq 2 -o $CIRCLE_NODE_INDEX -eq 3 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY} ; fi:
+    - . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh RUMPRUN_MKCONF=$(pwd)/myobj/config.mk ./tests/buildtests.sh ${KERNONLY}:
         parallel: true
     - if [ $CIRCLE_NODE_INDEX -eq 2 ] ; then . ./myobj/config && RUMPRUN_SHCONF=./myobj/config.sh ./tests/runtests.sh ${TESTS} ; fi:
         parallel: true
