@@ -56,6 +56,11 @@ test_apptools()
 
 	make
 
+	# FIXME linux
+	if [ ${RUMPKERNEL} == "linux" ] ; then
+		return
+	fi
+
 	if ${TESTCONFIGURE}; then
 		(
 			cd configure

@@ -49,4 +49,4 @@ ${KERNELS}: ${OBJS}
 	-o $@
 
 clean:
-	rm -rf main.o main.elf
+	rm -f *.o *.elf
