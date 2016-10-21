@@ -23,7 +23,7 @@ ssize_t rump_sys_sendto(int fd, const void *buf, size_t len, int flags,
 			const struct sockaddr *addr, socklen_t addrlen)
 {
 	return lkl_sys_sendto(fd, (void *)buf, len, flags,
-			      (struct __lkl__kernel_sockaddr_storage *)addr, addrlen);
+			      (struct lkl_sockaddr *)addr, addrlen);
 }
 
 int rump_sys_nanosleep(struct timespec *s, struct timespec *p);
