@@ -57,7 +57,7 @@ test_apptools()
 	make
 
 	# FIXME linux
-	if [ ${RUMPKERNEL} == "linux" ] ; then
+	if [ ${RUMPKERNEL} = "linux" ] ; then
 		return
 	fi
 
