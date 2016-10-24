@@ -25,7 +25,6 @@
 
 #include <bmk-core/mainthread.h>
 #include <bmk-core/printf.h>
-#include <bmk-core/null.h>
 
 #include <rumprun-base/config.h>
 #include <rumprun-base/rumprun.h>

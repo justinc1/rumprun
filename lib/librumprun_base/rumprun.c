@@ -62,18 +62,6 @@
 
 #include "rumprun-private.h"
 
-#ifdef __linux__
-#define	_STRING(x)	x
-
-#define	__strong_alias(alias,sym)				\
-	__asm(".global " _STRING(#alias) "\n"			\
-	      _STRING(#alias) " = " _STRING(#sym));
-
-#define	__weak_alias(alias,sym)				\
-	__asm(".weak " _STRING(#alias) "\n"		\
-	      _STRING(#alias) " = " _STRING(#sym));
-#endif
-
 static pthread_mutex_t w_mtx;
 static pthread_cond_t w_cv;
 
@@ -304,9 +292,11 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 	setupproc(rr);
 #endif
 
+#ifndef __NetBSD__
 	/* FIXME: need to implement pthread_create for rumprun/lkl */
 	rr->rr_mainfun(rr->rr_argc, rr->rr_argv);
-
+	/* should block here */
+#endif
 	if (pthread_create(&rr->rr_mainthread, NULL, mainbouncer, rr) != 0) {
 		fprintf(stderr, "rumprun: running %s failed\n", argv[0]);
 		free(rr);

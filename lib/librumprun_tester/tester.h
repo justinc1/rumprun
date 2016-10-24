@@ -36,6 +36,10 @@
 #define __END_DECLS
 #endif
 
+#ifndef roundup2
+#define	roundup2(x,m)	((((x) - 1) | ((m) - 1)) + 1)
+#endif
+
 #ifndef __arraycount
 #define __arraycount(_ar_) (sizeof(_ar_)/sizeof(_ar_[0]))
 #endif

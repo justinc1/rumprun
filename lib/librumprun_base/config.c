@@ -94,10 +94,6 @@
 	}								\
   } while (/*CONSTCOND*/0)
 
-#ifndef __arraycount
-#define __arraycount(_ar_) (sizeof(_ar_)/sizeof(_ar_[0]))
-#endif
-
 static char *
 token2cstr(jsmntok_t *t, char *data)
 {

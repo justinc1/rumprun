@@ -42,11 +42,6 @@
 
 #include <rumprun-base/rumprun.h>
 
-#ifdef __linux__
-#define	__weak_alias(alias,sym)						\
-    __asm(".weak alias\nalias = sym");
-#endif
-
 __weak_alias(daemon,_daemon)
 
 int

@@ -48,4 +48,8 @@ struct rumprun_exec {
 TAILQ_HEAD(rumprun_execs, rumprun_exec);
 extern struct rumprun_execs rumprun_execs;
 
+#ifndef __arraycount
+#define __arraycount(_ar_) (sizeof(_ar_)/sizeof(_ar_[0]))
+#endif
+
 #endif /* _BMKCOMMON_RUMPRUN_CONFIG_H_ */

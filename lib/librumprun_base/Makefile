@@ -19,7 +19,7 @@ SRCS+=		platefs.c
 INCS=		platefs.h
 INCSDIR=	/usr/include/rumprun
 .else
-CFLAGS+=	-g -O0 -Wno-parentheses -nostdinc -DCONFIG_LKL -DMUSL_LIBC -I${DESTDIR}/usr/include
+CFLAGS+=	-DCONFIG_LKL -DMUSL_LIBC
 .endif
 
 WARNS=		5

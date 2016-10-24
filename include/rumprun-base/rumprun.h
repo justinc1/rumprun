@@ -42,4 +42,20 @@ void	rumprun_daemon(void);
 
 extern int rumprun_cold;
 
+#ifndef _STRING
+#define	_STRING(x)	x
+#endif
+
+#ifndef __strong_alias
+#define	__strong_alias(alias,sym)				\
+	__asm(".global " _STRING(#alias) "\n"			\
+	      _STRING(#alias) " = " _STRING(#sym));
+#endif
+
+#ifndef __weak_alias
+#define	__weak_alias(alias,sym)				\
+	__asm(".weak " _STRING(#alias) "\n"		\
+	      _STRING(#alias) " = " _STRING(#sym));
+#endif
+
 #endif /* _RUMPRUN_BASE_RUMPRUN_H_ */
