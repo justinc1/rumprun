@@ -18,18 +18,17 @@ SRCS= main.c main-net.c
 OBJS= $(patsubst %.c,%.o, $(SRCS)) ${RROBJ}/rumprun.o
 KERNELS= $(patsubst %.c,%.elf, $(SRCS))
 
+ifeq (${RUMPKERNEL},netbsd)
 LIB_RUMP_NET= -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_config
 LIB_RUMP_PCI= -lrumpdev_pci_virtio -lrumpdev_virtio_if_vioif -lrumpdev_pci -lrumpdev
 LIB_RUMP= -lrumpvfs -lrump $(LIB_RUMP_NET) $(LIB_RUMP_PCI)
-
-# Linux libos
-ifeq (${RUMPKERNEL},linux)
+LIB_EXTRA=-lcompiler_rt
+# Linux LKL
+else
 CFLAGS+= -g -O0 -DLINUX_RUMP -Wno-error=strict-prototypes
 LDFLAGS+= -L${RRDEST}/usr/lib
 LIB_RUMP=-llkl
 LIB_RUMP+=-lrumpdev_linux_pci
-else
-LIB_RUMP+=-lcompiler_rt
 endif
 
 .PHONY: clean
@@ -46,6 +45,7 @@ ${KERNELS}: ${OBJS}
 	$< ${RROBJ}/rumprun.o						\
 	-nostdlib							\
 	-Wl,--whole-archive ${LIB_RUMP} -Wl,--no-whole-archive		\
+	${LIB_EXTRA}							\
 	-o $@
 
 clean:
