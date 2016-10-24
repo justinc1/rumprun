@@ -203,6 +203,7 @@ parseargs ()
 
 	export RUMPSRC
 	export BUILD_QUIET
+	export RUMPKERNEL
 
 	ARGSSHIFT=$((${orignargs} - $#))
 }
