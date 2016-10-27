@@ -389,6 +389,11 @@ buildrump ()
 	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
 	    || HAVECXX=true
 
+	# XXX
+	if [ ${RUMPKERNEL} = "linux" ] ; then
+		HAVECXX=false
+	fi
+
 	makeconfig ${RROBJ}/config.mk ''
 	makeconfig ${RROBJ}/config.sh \"
 	# XXX: gcc is hardcoded
