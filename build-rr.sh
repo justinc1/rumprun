@@ -384,14 +384,10 @@ buildrump ()
 	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
 
 	TOOLTUPLE=$(${RUMPMAKE} -f bsd.own.mk \
-	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-netbsd/}')
+	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-${RUMPKERNEL}/}')
 
 	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
 	    || HAVECXX=true
-
-	if [ ${RUMPKERNEL} = "linux" ] ; then
-		HAVECXX=false
-	fi
 
 	makeconfig ${RROBJ}/config.mk ''
 	makeconfig ${RROBJ}/config.sh \"
