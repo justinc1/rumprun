@@ -10,7 +10,7 @@ out-of-the-box, while the latter allows building highly customized
 solutions with minimal footprints.
 
 The Rumprun unikernel supports applications written in, for example
-but not limited to: _C_, _C++_, _Erlang_, _Go_, _Javascript (node.js)_,
+but not limited to: _C_, _C++_, _Erlang_, _Go_, _Java_, _Javascript (node.js)_,
 _Python_, _Ruby_ and _Rust_.
 
 You will find ready-made software packages for Rumprun from the
@@ -20,7 +20,9 @@ _Memcached_, _nanomsg_, _Nginx_ and _Redis_.  See the packages repository
 for further details.
 
 See the [wiki](http://wiki.rumpkernel.org/Repo:-rumprun) for more
-information and instructions.
+information and instructions.  You may also want to watch video
+tutorials in the
+[Rumprun unikernel video series](http://wiki.rumpkernel.org/Tutorial%3A-Rumprun-unikernel-video-series).
 
 Note: some of our tools will throw a warning about them
 being experimental.  It does not mean that they
