@@ -82,9 +82,3 @@ execve(const char *file, char *const argv[], char *const envp[])
 	return -1;
 }
 
-/* For Linux LKl */
-#ifndef __NetBSD__
-STUB_ERRNO(mmap);
-STUB_ERRNO(munmap);
-STUB_ERRNO(mprotect);
-#endif

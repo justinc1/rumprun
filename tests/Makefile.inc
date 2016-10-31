@@ -6,7 +6,7 @@ CXX= ${RUMPRUN_CXX}
 CFLAGS+= -Wall -Werror -Wmissing-prototypes -Wstrict-prototypes -g
 LDLIBS= -lrumprun_tester
 
-%:: %.c
+%:: %.c ${CC}
 	$(CC) $(CFLAGS) $< -o $@ $(LDLIBS)
 
 %:: %.cc

@@ -121,6 +121,15 @@ rumprun_boot(char *cmdline)
 	 */
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
+#else
+	void __init_libc(char **envp, char *pn);
+	static char dummy_argv[16] = "rumprun-lkl";
+	static char *initial_env[] = {
+		NULL,
+	};
+
+	__init_libc(initial_env, dummy_argv);
+
 #endif
 
 	/* print tmpfs result only after we bootstrapped userspace */
@@ -292,11 +301,6 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 	setupproc(rr);
 #endif
 
-#ifndef __NetBSD__
-	/* FIXME: need to implement pthread_create for rumprun/lkl */
-	rr->rr_mainfun(rr->rr_argc, rr->rr_argv);
-	/* should block here */
-#endif
 	if (pthread_create(&rr->rr_mainthread, NULL, mainbouncer, rr) != 0) {
 		fprintf(stderr, "rumprun: running %s failed\n", argv[0]);
 		free(rr);
@@ -386,6 +390,11 @@ rumprun_daemon(void)
 	pthread_mutex_unlock(&w_mtx);
 }
 
+#ifdef __linux__
+#include <linux/reboot.h>
+#include <lkl.h>
+#endif
+
 void __attribute__((noreturn))
 rumprun_reboot(void)
 {
@@ -393,6 +402,12 @@ rumprun_reboot(void)
 #ifdef __NetBSD__
 	_netbsd_userlevel_fini();
 	rump_sys_reboot(0, 0);
+#elif __linux__
+	char buf[7] = "reboot";
+	lkl_sys_reboot(LINUX_REBOOT_MAGIC1,
+			LINUX_REBOOT_MAGIC2,
+			LINUX_REBOOT_CMD_RESTART,
+			(void *)buf);
 #endif
 
 	bmk_platform_halt("reboot returned");
