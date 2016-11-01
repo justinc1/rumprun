@@ -81,4 +81,3 @@ execve(const char *file, char *const argv[], char *const envp[])
 	errno = ENOTSUP;
 	return -1;
 }
-

@@ -79,6 +79,8 @@ void	bmk_cpu_sched_create(struct bmk_thread *, struct bmk_tcb *,
 
 void	bmk_sched_set_hook(void (*)(void *, void *));
 struct bmk_thread *bmk_sched_init_mainlwp(void *);
+void *bmk_sched_get_cookie(void);
+void bmk_sched_set_cookie(struct bmk_thread *thread, void *cookie);
 
 extern __thread struct bmk_thread *bmk_current;
 

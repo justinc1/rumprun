@@ -123,6 +123,21 @@ rumpuser_thread_join(void *p)
 	return 0;
 }
 
+void *rumpuser_thread_get_cookie(void);
+void *
+rumpuser_thread_get_cookie(void)
+{
+
+	return bmk_sched_get_cookie();
+}
+
+void rumpuser_thread_set_cookie(void *thread, void *cookie);
+void
+rumpuser_thread_set_cookie(void *thread, void *cookie)
+{
+	bmk_sched_set_cookie(thread, cookie);
+}
+
 struct rumpuser_mtx {
 	struct waithead waiters;
 	int v;
