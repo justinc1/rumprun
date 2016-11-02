@@ -123,6 +123,13 @@ rumpuser_thread_join(void *p)
 	return 0;
 }
 
+void *rumpuser_thread_self(void);
+void *
+rumpuser_thread_self(void)
+{
+	return bmk_current;
+}
+
 void *rumpuser_thread_get_cookie(void);
 void *
 rumpuser_thread_get_cookie(void)
