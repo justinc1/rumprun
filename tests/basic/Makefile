@@ -1,9 +1,6 @@
 include ../Makefile.inc
 
-ALL=tls_test.bin ctor_test.bin pthread_test.bin
-ifeq (${RUMPKERNEL},netbsd)
-ALL+=misc_test.bin
-endif
+ALL=tls_test.bin ctor_test.bin pthread_test.bin misc_test.bin
 
 all: $(ALL)
 
