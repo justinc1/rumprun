@@ -55,6 +55,13 @@
 #include <fs/tmpfs/tmpfs_args.h>
 #endif
 
+#ifdef __linux__
+#include <linux/reboot.h>
+#include <lkl.h>
+#define CONFIG_AUTO_LKL_POSIX_HOST
+#include <lkl_host.h>
+#endif
+
 #include <bmk-core/platform.h>
 
 #include <rumprun-base/rumprun.h>
@@ -122,6 +129,17 @@ rumprun_boot(char *cmdline)
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
 #else
+	char fstype[8] = "tmpfs";
+	char dir[8] = "/tmp";
+
+	rv = lkl_sys_mkdir(dir, 0xff);
+	if (rv && rv != -LKL_EEXIST) {
+		fprintf(stderr, "mount_fs mkdir (rv=%d)\n", rv);
+	}
+
+	rv = lkl_sys_mount(NULL, dir, fstype, 0, NULL);
+	tmpfserrno = rv;
+
 	void __init_libc(char **envp, char *pn);
 	static char dummy_argv[16] = "rumprun-lkl";
 	static char *initial_env[] = {
@@ -389,11 +407,6 @@ rumprun_daemon(void)
 	pthread_cond_broadcast(&w_cv);
 	pthread_mutex_unlock(&w_mtx);
 }
-
-#ifdef __linux__
-#include <linux/reboot.h>
-#include <lkl.h>
-#endif
 
 void __attribute__((noreturn))
 rumprun_reboot(void)
