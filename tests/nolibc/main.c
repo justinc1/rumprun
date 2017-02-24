@@ -12,6 +12,7 @@
 #define rump_sys_write lkl_sys_write
 #define rump_sys_open lkl_sys_open
 #define rump_sys_reboot lkl_sys_reboot
+#include "stub.c"
 #else
 #include <rump/rump_syscalls.h>
 #endif

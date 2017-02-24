@@ -12,6 +12,8 @@
 #define AF_INET6 10
 
 #include <lkl.h>
+#include "stub.c"
+
 #define rump_sys_write lkl_sys_write
 #define rump_sys_open lkl_sys_open
 #define rump_sys_reboot lkl_sys_reboot
