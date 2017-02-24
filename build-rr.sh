@@ -544,19 +544,20 @@ doinstall ()
 			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
 			find lib -maxdepth 1 -name \*.a \
 			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
-
-			# make sure special cases are visible everywhere
-			for x in c pthread ; do
-				rm -f rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
-				ln -s ../lib${x}.a \
-				    rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
-			done
 		elif [ ${RUMPKERNEL} = "linux" ] ; then
 			find lib -maxdepth 1 -name \*.a \
-			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+			    -exec cp -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+			find lib -maxdepth 1 -name \*.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
 			# FIXME: need to create empty librump.a for linux
 			ar rc rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/librump.a
 		fi
+		# make sure special cases are visible everywhere
+		for x in c pthread ; do
+			rm -f rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
+			ln -s ../lib${x}.a \
+			    rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
+		done
 
 		find . -maxdepth 1 \! -path . \! -path ./include\* \
 		    | xargs tar -cf -
