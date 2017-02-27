@@ -45,6 +45,11 @@
 #include <dev/vndvar.h>
 #endif
 
+#ifdef __linux__
+#include <arpa/inet.h>
+#include <lkl.h>
+#endif
+
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -341,6 +346,50 @@ config_ipv6(const char *ifname, const char *method,
 		}
 	}
 }
+#elif __linux__
+static void
+config_ipv4(const char *ifname, const char *method,
+	const char *addr, const char *mask, const char *gw)
+{
+	int rv, ifindex;
+
+	if (strcmp(method, "dhcp") == 0) {
+		errx(1, "configuring dhcp is not supported yet (%s)", ifname);
+	} else {
+		if (strcmp(method, "static") != 0) {
+			errx(1, "method \"static\" or \"dhcp\" expected, "
+			    "got \"%s\"", method);
+		}
+
+		if (!addr || !mask) {
+			errx(1, "static net cfg missing addr or mask");
+		}
+
+		/* XXX: ifname should be like "eth%d", where ifindex will be
+		 * started from 2. */
+		ifindex = atoi(ifname + 3) + 2;
+
+		lkl_if_up(ifindex);
+
+		if ((rv = lkl_if_set_ipv4(ifindex, inet_addr(addr),
+					  atoi(mask))) < 0) {
+			errx(1, "ifconfig \"%s\" for \"%s/%s\" failed",
+			    ifname, addr, mask);
+		}
+
+		if (gw && (rv = lkl_set_ipv4_gateway(inet_addr(addr))) != 0) {
+			errx(1, "gw \"%s\" addition failed", gw);
+		}
+	}
+}
+
+static void
+config_ipv6(const char *ifname, const char *method,
+	const char *addr, const char *mask, const char *gw)
+{
+	errx(1, "ipv6 autoconfig is not supported yet");
+}
+#endif
 
 static int
 handle_net(jsmntok_t *t, int left, char *data)
@@ -411,10 +460,16 @@ handle_net(jsmntok_t *t, int left, char *data)
 	}
 
 	if (cloner) {
+#ifdef __NetBSD__
 		if ((rv = rump_pub_netconfig_ifcreate(ifname)) != 0) {
 			errx(1, "rumprun_config: ifcreate %s failed: %d",
 			    ifname, rv);
 		}
+#else
+		/* XXX: quiet compiler */
+		rv = 0;
+		warnx("cloner is not used in linux (%d)", rv);
+#endif
 	}
 
 	if (strcmp(type, "inet") == 0) {
@@ -427,6 +482,8 @@ handle_net(jsmntok_t *t, int left, char *data)
 
 	return 2*objsize + 1;
 }
+
+#ifdef __NetBSD__
 
 static void
 makevnddev(int israw, int unit, int part, char *storage, size_t storagesize)
@@ -671,8 +728,8 @@ struct {
 	{ "hostname", handle_hostname },
 #ifdef __NetBSD__
 	{ "blk", handle_blk },
-	{ "net", handle_net },
 #endif
+	{ "net", handle_net },
 };
 
 #ifdef __NetBSD__
