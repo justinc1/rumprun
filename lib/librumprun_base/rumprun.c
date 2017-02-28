@@ -317,6 +317,8 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 
 #ifdef __NetBSD__
 	setupproc(rr);
+#elif __linux__
+	lkl_parse_env();
 #endif
 	mainbouncer(rr);
 	return rr;

@@ -166,3 +166,10 @@ char *strtok(char *restrict s, const char *restrict sep)
 	else p = 0;
 	return s;
 }
+
+char *getenv(const char *name);
+char *getenv(const char *name)
+{
+	/* not supported */
+	return NULL;
+}
