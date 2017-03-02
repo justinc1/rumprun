@@ -173,3 +173,10 @@ char *getenv(const char *name)
 	/* not supported */
 	return NULL;
 }
+
+unsigned long rumpns_simple_strtoul(const char *, char **, unsigned int);
+unsigned long strtoul(const char *restrict s, char **restrict p, int base);
+unsigned long strtoul(const char *restrict s, char **restrict p, int base)
+{
+	return rumpns_simple_strtoul(s, p, base);
+}
