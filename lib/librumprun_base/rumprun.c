@@ -111,11 +111,16 @@ rumprun_boot(char *cmdline)
 	rump_boot_setsigmodel(RUMP_SIGMODEL_IGNORE);
 	rump_init();
 
-#ifdef __NetBSD__
 	/* mount /tmp before we let any userspace bits run */
+#ifdef __NetBSD__
 	rump_sys_mount(MOUNT_TMPFS, "/tmp", 0, &ta, sizeof(ta));
+#elif __linux__
+	rump_sys_mount("tmpfs", "/tmp", 0, NULL, 0);
+#endif
+
 	tmpfserrno = errno;
 
+#ifdef __NetBSD__
 	/*
 	 * XXX: _netbsd_userlevel_init() should technically be called
 	 * in mainbouncer() per process.  However, there's currently no way
@@ -129,17 +134,6 @@ rumprun_boot(char *cmdline)
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
 #else
-	char fstype[8] = "tmpfs";
-	char dir[8] = "/tmp";
-
-	rv = lkl_sys_mkdir(dir, 0xff);
-	if (rv && rv != -LKL_EEXIST) {
-		fprintf(stderr, "mount_fs mkdir (rv=%d)\n", rv);
-	}
-
-	rv = lkl_sys_mount(NULL, dir, fstype, 0, NULL);
-	tmpfserrno = rv;
-
 	void __init_libc(char **envp, char *pn);
 	static char dummy_argv[16] = "rumprun-lkl";
 	static char *initial_env[] = {
