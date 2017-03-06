@@ -558,7 +558,7 @@ configetfs(const char *path, int hard)
 	errx(1, "etfs is not supported with LKL \"%s\"", path);
 	return NULL;
 }
-void rump_lkl_test(void);
+
 static bool
 mount_blk(const char *dev, const char *mp)
 {

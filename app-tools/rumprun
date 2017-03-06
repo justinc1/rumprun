@@ -703,7 +703,7 @@ bake_iso ()
 	[ -z "${DUMPCMD}" ] || die -D not supported by iso.  Use -T.
 
 	type xorriso >/dev/null || die bake_iso needs xorriso
-	type grub-mkrescue >/dev/null || die bake_iso needs grub-mkrescue
+	type grub2-mkrescue >/dev/null || die bake_iso needs grub2-mkrescue
 
 	store_blkspec=json_store_iso_blkspec
 	store_netspec=json_store_netspec
@@ -777,7 +777,7 @@ bake_iso ()
 	    $(basename $1) >> "${ISODIR}/boot/grub/grub.cfg"
 	cp ${bootimage} "${ISODIR}/boot"
 	cp "${TMPDIR}/json.cfg" "${ISODIR}"
-	grub-mkrescue -o ${opt_name} "${ISODIR}"
+	grub2-mkrescue -o ${opt_name} "${ISODIR}"
 }
 
 make_ec2 ()
