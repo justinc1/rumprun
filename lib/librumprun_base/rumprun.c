@@ -56,8 +56,6 @@
 #endif
 
 #ifdef __linux__
-#include <linux/reboot.h>
-#include <lkl.h>
 #define CONFIG_AUTO_LKL_POSIX_HOST
 #include <lkl_host.h>
 #endif
@@ -413,14 +411,8 @@ rumprun_reboot(void)
 
 #ifdef __NetBSD__
 	_netbsd_userlevel_fini();
-	rump_sys_reboot(0, 0);
-#elif __linux__
-	char buf[7] = "reboot";
-	lkl_sys_reboot(LINUX_REBOOT_MAGIC1,
-			LINUX_REBOOT_MAGIC2,
-			LINUX_REBOOT_CMD_RESTART,
-			(void *)buf);
 #endif
+	rump_sys_reboot(0, 0);
 
 	bmk_platform_halt("reboot returned");
 }
