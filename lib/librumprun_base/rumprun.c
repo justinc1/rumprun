@@ -37,9 +37,6 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#ifdef __linux__
-#undef NULL
-#endif
 #include <pthread.h>
 #include <stdio.h>
 #include <sched.h>
