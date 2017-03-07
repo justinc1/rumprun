@@ -33,8 +33,11 @@ cd $(dirname $0) || die 'could not enter test dir'
 export RUMPRUN_WARNING_STFU=please
 
 # TODO: use a more scalable way of specifying tests
-TESTS='hello/hello.bin basic/ctor_test.bin basic/pthread_test.bin
-	basic/tls_test.bin basic/misc_test.bin'
+TESTS='hello/hello.bin basic/ctor_test.bin'
+if [ -z "${TEST_LESS}" ] ; then
+TESTS=${TESTS}' basic/pthread_test.bin basic/tls_test.bin basic/misc_test.bin'
+fi
+
 [ -x hello/hellopp.bin ] && TESTS="${TESTS} hello/hellopp.bin"
 
 STARTMAGIC='=== FOE RUMPRUN 12345 TES-TER 54321 ==='
