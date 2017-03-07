@@ -64,7 +64,8 @@ dommap(size_t len, int munmapperpage)
 {
 	void *v;
 
-	v = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
+	v = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_ANON | MAP_PRIVATE,
+		 -1, 0);
 	if (v == MAP_FAILED)
 		return errno;
 	memset(v, 'a', len);
