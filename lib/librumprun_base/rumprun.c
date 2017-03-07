@@ -309,9 +309,11 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 #elif __linux__
 	lkl_parse_env();
 #endif
-	mainbouncer(rr);
-	return rr;
 
+#ifdef __linux__
+	mainbouncer(rr);
+	releaseme(rr);
+#else
 	if (pthread_create(&rr->rr_mainthread, NULL, mainbouncer, rr) != 0) {
 		fprintf(stderr, "rumprun: running %s failed\n", argv[0]);
 		free(rr);
@@ -335,6 +337,7 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 		rumprun_wait(rr);
 		rr = NULL;
 	}
+#endif
 	return rr;
 }
 

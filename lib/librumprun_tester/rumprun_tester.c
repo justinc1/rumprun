@@ -42,6 +42,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __linux__
+#include <sys/stat.h>
+#endif
+
 #include <rumprun/tester.h>
 
 #define INITIAL "??   0\n"
@@ -75,6 +79,15 @@ main(int argc, char *argv[])
 	/* were we ran via the test framework? */
 	if (argc < 2 || strcmp(argv[1], "__test") != 0)
 		return rumprun_test(argc, argv);
+
+#ifdef __linux__
+	/* XXX: need mknod qemu/virtio only */
+	unsigned long major = 254, minor = 0, enc_dev;
+	enc_dev = (minor & 0xff) | (major << 8) | ((minor & ~0xff) << 12);
+
+	if (mknod("/dev/ld0d", 0666 | S_IFBLK, enc_dev) == -1)
+		err(1, "rumprun_test: mknod");
+#endif
 
 	/*
 	 * XXX: need a better way to determine disk device!
