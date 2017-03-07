@@ -314,7 +314,6 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 		free(rr);
 		return NULL;
 	}
-
 	LIST_INSERT_HEAD(&rumprunners, rr, rr_entries);
 
 	/* async launch? */

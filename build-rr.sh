@@ -558,7 +558,6 @@ doinstall ()
 			ln -s ../lib${x}.a \
 			    rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a
 		done
-
 		find . -maxdepth 1 \! -path . \! -path ./include\* \
 		    | xargs tar -cf -
 	) | (cd ${RRDEST} ; tar -xf -)

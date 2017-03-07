@@ -780,6 +780,7 @@ getcmdlinefromroot(const char *cfgname)
 	return p;
 }
 
+
 #define ROOTCFG "_RUMPRUN_ROOTFSCFG="
 static const size_t rootcfglen = sizeof(ROOTCFG)-1;
 static char *
