@@ -128,15 +128,10 @@ rumprun_boot(char *cmdline)
 	 */
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
-#else
-	void __init_libc(char **envp, char *pn);
-	static char dummy_argv[16] = "rumprun-lkl";
-	static char *initial_env[] = {
-		NULL,
-	};
+#elif __linux__
+	void _linux_userlevel_init(void);
 
-	__init_libc(initial_env, dummy_argv);
-
+	_linux_userlevel_init();
 #endif
 
 	/* print tmpfs result only after we bootstrapped userspace */

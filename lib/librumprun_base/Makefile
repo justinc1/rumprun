@@ -19,6 +19,7 @@ SRCS+=		platefs.c
 INCS=		platefs.h
 INCSDIR=	/usr/include/rumprun
 .else
+SRCS+=		linux_initfini.c
 CFLAGS+=	-DCONFIG_LKL -DMUSL_LIBC
 .endif
 
