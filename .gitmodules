@@ -4,9 +4,9 @@
 [submodule "src-netbsd"]
 	path = src-netbsd
 	url = https://github.com/rumpkernel/src-netbsd
-[submodule "lkl-linux"]
-	path = lkl-linux
-	url = git://github.com/thehajime/lkl-linux
+[submodule "linux"]
+	path = linux
+	url = git://github.com/libos-nuse/lkl-linux
 [submodule "musl"]
 	path = musl
 	url = git://github.com/libos-nuse/musl.git

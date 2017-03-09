@@ -7,7 +7,7 @@ builduserspace ()
 	echo "=== building musl ==="
 	abspath STAGING
 	cd musl
-	LKL_HEADER="${RROBJ}/rumptools/dest/"
+	LKL_HEADER="${RROBJ}/dest.stage"
 	CIRCLE_TEST_REPORTS="${CIRCLE_TEST_REPORTS-./}"
 	./configure --with-lkl=${LKL_HEADER} --disable-shared --enable-debug \
 		    --disable-optimize --prefix=${STAGING}/ CFLAGS="-DRUMPRUN"
