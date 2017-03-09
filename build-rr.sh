@@ -97,7 +97,7 @@ parseargs ()
 	KERNONLY=false
 	RROBJ=
 	RUMPSRC=src-netbsd
-	LKLSRC=lkl-linux
+	LKLSRC=linux
 	RUMPKERNEL=netbsd
 	STDJ=-j4
 	EXTSRC=
