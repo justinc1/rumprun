@@ -29,6 +29,7 @@ buildpci ()
 	echo '>>'
 
 	# XXX:, FIXME: LKL still needs librumpuser from src-netbsd
+	mkdir -p ${STAGING}/../include/
 	ln -s -f ${RUMPSRC}/sys/rump/include/rump/ ${STAGING}/../include/
 	cp -rpf ${RUMPSRC}/sys/rump/include/rump/ ${STAGING}/include/
 
@@ -36,7 +37,7 @@ buildpci ()
 	mkdir -p ${RROBJ}/rumptools/dest/usr/include/sys/
 	cp include/bmk-core/queue.h ${RROBJ}/rumptools/dest/usr/include/sys/
 
-	CFLAGS="-I ./include -I ${PLATFORMDIR}/include/ -I ${RUMPTOOLS}/../include/ -I${LKLSRC}/arch/lkl/drivers"
+	CFLAGS="-I ./include -I ${PLATFORMDIR}/include/ -I ${PLATFORMDIR}/xen/include/ -I ${RUMPTOOLS}/../include/ -I${LKLSRC}/arch/lkl/drivers"
 	abspath BROBJ
 	abspath STAGING
 

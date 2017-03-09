@@ -48,6 +48,9 @@ test_apptools()
 		;;
 	xen)
 		RUMPBAKE_PLATFORM='xen_pv'
+		if [ ${RUMPKERNEL} = "linux" ] ; then
+			RUMPBAKE_PLATFORM='xen_pv_lkl'
+		fi
 		;;
 	*)
 		echo ">> unknown platform \"$PLATFORM\""
