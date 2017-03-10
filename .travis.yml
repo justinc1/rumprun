@@ -26,6 +26,11 @@ env:
   - PLATFORM=hw MACHINE=x86_64 TESTS=none RUMPKERNEL="-r linux" KERNONLY=-k EXTRAFLAGS=
   - PLATFORM=xen MACHINE=x86_64 TESTS=none RUMPKERNEL="-r linux" KERNONLY=-k EXTRAFLAGS=
 
+matrix:
+   allow_failures:
+      - env: PLATFORM=hw MACHINE=i486 ELF=elf TESTS=qemu RUMPKERNEL="-r linux" EXTRAFLAGS='-- -F ACLFLAGS=-m32 -F ACLFLAGS=-march=i686' TEST_LESS=1
+      - env: PLATFORM=xen MACHINE=i486 ELF=elf TESTS=none RUMPKERNEL="-r linux" EXTRAFLAGS='-- -F ACLFLAGS=-m32'
+
 script:
   - git submodule update --init
   - ./build-rr.sh -o myobj -j16 -qq ${RUMPKERNEL} ${KERNONLY} ${PLATFORM} ${EXTRAFLAGS}
