@@ -28,6 +28,7 @@
 
 void _netbsd_userlevel_init(void);
 void _netbsd_userlevel_fini(void);
+void _linux_userlevel_init(void);
 
 void rumprun_lwp_init(void);
 

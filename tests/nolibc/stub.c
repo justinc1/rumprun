@@ -1,4 +1,4 @@
-/* 
+/*
  * XXX:
  *
  * Stub function definitions which LKL _accidentally_ uses
@@ -42,7 +42,7 @@ __asm__(
 	"test %rax,%rax\n"
 	"jnz 1f\n"
 	"inc %rax\n"                /* if val==0, val=1 per longjmp semantics */
-"1:\n"	
+"1:\n"
 	"mov (%rdi),%rbx\n"         /* rdi is the jmp_buf, restore regs from it */
 	"mov 8(%rdi),%rbp\n"
 	"mov 16(%rdi),%r12\n"

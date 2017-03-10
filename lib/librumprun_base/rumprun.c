@@ -44,7 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <bmk-core/types.h>
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
@@ -129,8 +128,6 @@ rumprun_boot(char *cmdline)
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
 #elif __linux__
-	void _linux_userlevel_init(void);
-
 	_linux_userlevel_init();
 #endif
 
@@ -306,6 +303,7 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 #endif
 
 #ifdef __linux__
+	/* FIXME: no pthread support yet */
 	mainbouncer(rr);
 	releaseme(rr);
 #else

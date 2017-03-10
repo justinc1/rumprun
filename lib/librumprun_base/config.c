@@ -30,10 +30,14 @@
  */
 
 #include <sys/param.h>
+
+#ifdef __linux__
+#include <sys/types.h>
+#include <stdbool.h>
+#endif
+
 #ifdef __NetBSD__
 #include <sys/disklabel.h>
-#elif __linux__
-#include <sys/types.h>
 #endif
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -55,7 +59,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 #include <rump/rump.h>
 #include <rump/netconfig.h>

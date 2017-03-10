@@ -119,7 +119,6 @@ ferment)
 	${CC} ${CFLAGS} -no-integrated-cpp \
 	    --sysroot !DESTDIR!/rumprun-!MACHINE_GNU_ARCH! \
 	    -specs=!DESTDIR!/rumprun-!MACHINE_GNU_ARCH!/lib/specs-stub \
-	    -Wl,-r -nostdlib \
 	    ${OUTFILE} -o /dev/null
 	if [ $? -ne 0 ]; then
 		if [ "${RUMPRUN_STUBLINK}" = "succeed" ]; then

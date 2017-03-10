@@ -7,11 +7,11 @@
 
 #include <rump/rump.h>
 #ifdef LINUX_RUMP
-#include <linux/reboot.h>
 #include <lkl.h>
+int rump___sysimpl_reboot(int, char *);
+#define rump_sys_reboot rump___sysimpl_reboot
 #define rump_sys_write lkl_sys_write
 #define rump_sys_open lkl_sys_open
-#define rump_sys_reboot lkl_sys_reboot
 #include "stub.c"
 #else
 #include <rump/rump_syscalls.h>
@@ -46,12 +46,5 @@ bmk_mainthread(void *cmdline)
 		bmk_printf("Success?! fd=%d\n", fd);
 	}
 
-#ifdef LINUX_RUMP
-	rump_sys_reboot(LINUX_REBOOT_MAGIC1,
-			LINUX_REBOOT_MAGIC2,
-			LINUX_REBOOT_CMD_RESTART,
-			(void *)"reboot");
-#else
 	rump_sys_reboot(0,0);
-#endif
 }

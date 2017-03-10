@@ -16,7 +16,8 @@
 
 #define rump_sys_write lkl_sys_write
 #define rump_sys_open lkl_sys_open
-#define rump_sys_reboot lkl_sys_reboot
+#define rump_sys_reboot rump___sysimpl_reboot
+int rump___sysimpl_reboot(int, char *);
 #define rump_sys_socket lkl_sys_socket
 
 ssize_t rump_sys_sendto(int fd, const void *buf, size_t len, int flags,
@@ -130,10 +131,6 @@ bmk_mainthread(void *cmdline)
 {
 	int rv, fd;
 
-#ifdef LINUX_RUMP
-//	boot_cmdline = "loglevel=10 debug";
-//	boot_cmdline = "loglevel=7 debug";
-#endif
 	rv = rump_init();
 	bmk_printf("rump kernel init complete, rv %d\n", rv);
 
@@ -156,12 +153,5 @@ bmk_mainthread(void *cmdline)
 	struct timespec ts = {10, 0};
 	rump_sys_nanosleep(&ts, 0);
 
-#ifdef LINUX_RUMP
-	rump_sys_reboot(LINUX_REBOOT_MAGIC1,
-			LINUX_REBOOT_MAGIC2,
-			LINUX_REBOOT_CMD_RESTART,
-			(void *)"reboot");
-#else
 	rump_sys_reboot(0,0);
-#endif
 }

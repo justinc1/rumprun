@@ -15,10 +15,6 @@ builduserspace ()
 	make obj/src/internal/version.h
 	make install
 )
-
-	TMP=`mktemp --suffix=.c`
-	${CC} -c ${TMP} -o ${STAGING}/rumprun-${MACHINE_GNU_ARCH}/lib/pseudolinkstubs.o
-	rm -f ${TMP}
 }
 
 

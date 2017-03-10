@@ -88,7 +88,12 @@ endif
 PSEUDOSTUBS:= ${RROBJ}/pseudolinkstubs
 
 ${PSEUDOSTUBS}.c: ${RROBJLIB}/librumprun_base/librumprun_base.a
+ifeq (${RUMPKERNEL},netbsd)
 	sh ../makepseudolinkstubs.sh ${NM} ${RUMPSRC} $< $@
+endif
+ifeq (${RUMPKERNEL},linux)
+	sh ../makepseudolinkstubs-linux.sh $@
+endif
 
 ${RROBJ}/bmk.ldscript: ${LDSCRIPT}
 	ln -sf $< $@
@@ -97,7 +102,7 @@ commonlibs: platformlibs userlibs
 ifeq (${RUMPKERNEL},netbsd)
 userlibs: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a ${LIBUNWIND} ${RROBJLIB}/librumprunfs_base/librumprunfs_base.a
 else
-userlibs: ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a
+userlibs: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a
 endif
 platformlibs: ${RROBJLIB}/libbmk_core/libbmk_core.a ${RROBJLIB}/libbmk_rumpuser/libbmk_rumpuser.a ${RROBJ}/bmk.ldscript
 rumpkernlibs: ${RROBJLIB}/librumpkern_bmktc/librumpkern_bmktc.a ${RROBJLIB}/librumpkern_mman/librumpkern_mman.a
@@ -137,9 +142,7 @@ installuser:
 
 INSTALLTGTS+=	installkern
 ifneq (${KERNONLY},true)
-ifeq (${RUMPKERNEL},netbsd)
 INSTALLTGTS+=	installuser
-endif
 endif
 
 .PHONY: install
