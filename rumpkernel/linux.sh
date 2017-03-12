@@ -39,12 +39,12 @@ buildpci ()
 
 	HYPERCALLS=
 	if [ ${PLATFORM} = "hw" ] ; then
-		${CC} ${CFLAGS} ${PLATFORMDIR}/pci/rumppci.c -c -o ${BROBJ}/rumppci.o
-		${CC} ${CFLAGS} ${PLATFORMDIR}/pci/rumpdma.c -c -o ${BROBJ}/rumpdma.o
+		${CC:-cc} ${CFLAGS} ${PLATFORMDIR}/pci/rumppci.c -c -o ${BROBJ}/rumppci.o
+		${CC:-cc} ${CFLAGS} ${PLATFORMDIR}/pci/rumpdma.c -c -o ${BROBJ}/rumpdma.o
 		HYPERCALLS="${BROBJ}/rumppci.o ${BROBJ}/rumpdma.o"
 	else
-		${CC} ${CFLAGS} ${PLATFORMDIR}/pci/rumphyper_pci.c -c -o ${BROBJ}/rumphyper_pci.o
-		${CC} ${CFLAGS} ${PLATFORMDIR}/pci/rumphyper_dma.c -c -o ${BROBJ}/rumphyper_dma.o
+		${CC:-cc} ${CFLAGS} ${PLATFORMDIR}/pci/rumphyper_pci.c -c -o ${BROBJ}/rumphyper_pci.o
+		${CC:-cc} ${CFLAGS} ${PLATFORMDIR}/pci/rumphyper_dma.c -c -o ${BROBJ}/rumphyper_dma.o
 		HYPERCALLS="${BROBJ}/rumphyper_pci.o ${BROBJ}/rumphyper_dma.o"
 	fi
 	make RUMP_BMK_PCI_HYPERCALLS="${HYPERCALLS}" -C ${LKLSRC}/arch/lkl/drivers/
