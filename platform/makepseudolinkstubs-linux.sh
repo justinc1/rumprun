@@ -57,8 +57,8 @@ void _start(void)
 {
 }
 
-void __dead _exit(int);
-void __dead _exit(int)
+void _exit(int);
+void _exit(int t)
 {
 }
 
