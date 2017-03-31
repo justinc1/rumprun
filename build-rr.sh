@@ -49,6 +49,7 @@ helpme ()
 	printf "\t-o: use non-default object directory\n"
 	printf "\t-k: build kernel only, without libc or tools\n"
 	printf "\t-s: specify alternative src-netbsd location\n\n"
+	printf "\t-r: type of rump kernel [netbsd|linux]. default netbsd\n\n\n"
 	printf "\tbuildrump.sh opts are passed to buildrump.sh\n"
 	printf "\n"
 	printf "The toolchain is picked up from the environment.  See the\n"
@@ -96,6 +97,8 @@ parseargs ()
 	KERNONLY=false
 	RROBJ=
 	RUMPSRC=src-netbsd
+	LKLSRC=linux
+	RUMPKERNEL=netbsd
 	STDJ=-j4
 	EXTSRC=
 
@@ -103,7 +106,7 @@ parseargs ()
 	DOinstall=false
 
 	orignargs=$#
-	while getopts '?d:hj:ko:qs:' opt; do
+	while getopts '?d:hj:kr:o:qs:' opt; do
 		case "$opt" in
 		'j')
 			[ -z "$(echo ${OPTARG} | tr -d '[0-9]')" ] \
@@ -115,6 +118,14 @@ parseargs ()
 			;;
 		'k')
 			KERNONLY=true
+			;;
+		'r')
+			RUMPKERNEL="${OPTARG}"
+			if [ ${RUMPKERNEL} != "netbsd" -a ${RUMPKERNEL} != "linux" ]; then
+				echo '>> ERROR:'
+				echo '>> -r option (RUMPKERNEL) must be netbsd or linux'
+				exit 1
+			fi
 			;;
 		'o')
 			RROBJ="${OPTARG}"
@@ -180,6 +191,8 @@ parseargs ()
 		DOinstall=true
 	fi
 
+	. rumpkernel/${RUMPKERNEL}.sh
+
 	case ${RUMPSRC} in
 	/*)
 		;;
@@ -190,6 +203,7 @@ parseargs ()
 
 	export RUMPSRC
 	export BUILD_QUIET
+	export RUMPKERNEL
 
 	ARGSSHIFT=$((${orignargs} - $#))
 }
@@ -297,6 +311,9 @@ setvars ()
 	abspath RRDEST
 	abspath RROBJ
 	abspath RUMPSRC
+	abspath LKLSRC
+	export RROBJ
+	export LKLSRC
 }
 
 checktools ()
@@ -357,7 +374,7 @@ buildrump ()
 	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
 	    -V MKPIC=no -V RUMP_CURLWP=__thread				\
 	    -V RUMP_KERNEL_IS_LIBC=1 -V BUILDRUMP_SYSROOT=yes		\
-	    ${extracflags} "$@" tools
+	    ${extracflags} -l ${RUMPKERNEL} "$@" tools
 
 	echo '>>'
 	echo '>> Now that we have the appropriate tools, performing'
@@ -367,7 +384,7 @@ buildrump ()
 	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
 
 	TOOLTUPLE=$(${RUMPMAKE} -f bsd.own.mk \
-	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-netbsd/}')
+	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-${RUMPKERNEL}/}')
 
 	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
 	    || HAVECXX=true
@@ -406,7 +423,7 @@ EOF
 	# build rump kernel
 	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
 	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
-	    "$@" build kernelheaders install
+	    -l ${RUMPKERNEL} "$@" build kernelheaders install
 
 	echo '>>'
 	echo '>> Rump kernel components built.  Proceeding to build'
@@ -419,33 +436,6 @@ buildapptools ()
 
 	${MAKE} -C app-tools BUILDRR=true
 	${MAKE} -C app-tools BUILDRR=true install
-}
-
-builduserspace ()
-{
-
-	usermtree ${STAGING}
-
-	LIBS="$(stdlibs ${RUMPSRC})"
-	! ${HAVECXX} || LIBS="${LIBS} $(stdlibsxx ${RUMPSRC})"
-
-	userincludes ${RUMPSRC} ${LIBS} $(pwd)/lib/librumprun_tester
-	for lib in ${LIBS}; do
-		makeuserlib ${lib}
-	done
-}
-
-buildpci ()
-{
-
-	if eval ${PLATFORM_PCI_P}; then
-		(
-			cd ${PLATFORMDIR}/pci
-			${RUMPMAKE} ${STDJ} obj
-			${RUMPMAKE} ${STDJ} dependall
-			${RUMPMAKE} ${STDJ} install
-		)
-	fi
 }
 
 wraponetool ()
@@ -476,6 +466,7 @@ makeconfig ()
 	echo "TOOLTUPLE=${quote}${TOOLTUPLE}${quote}" >> ${1}
 	echo "KERNONLY=${quote}${KERNONLY}${quote}" >> ${1}
 	echo "PLATFORM=${quote}${PLATFORM}${quote}" >> ${1}
+	echo "RUMPKERNEL=${quote}${RUMPKERNEL}${quote}" >> ${1}
 
 	echo "RRDEST=${quote}${RRDEST}${quote}" >> ${1}
 	echo "RROBJ=${quote}${RROBJ}${quote}" >> ${1}
@@ -517,7 +508,7 @@ dobuild ()
 
 	# do final build of the platform bits
 	( cd ${PLATFORMDIR} \
-	    && ${MAKE} BUILDRR=true \
+	    && ${MAKE} BUILDRR=true RUMPKERNEL=${RUMPKERNEL} \
 	    && ${MAKE} BUILDRR=true install || exit 1)
 	[ $? -eq 0 ] || die platform make failed!
 }
@@ -543,11 +534,19 @@ doinstall ()
 		# first, move things to where we want them to be
 		cd ${STAGING}
 		rm -rf lib/pkgconfig
-		find lib -maxdepth 1 -name librump\*.a \
-		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
-		find lib -maxdepth 1 -name \*.a \
-		    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
-
+		if [ ${RUMPKERNEL} = "netbsd" ] ; then
+			find lib -maxdepth 1 -name librump\*.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+			find lib -maxdepth 1 -name \*.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
+		elif [ ${RUMPKERNEL} = "linux" ] ; then
+			find lib -maxdepth 1 -name \*.a \
+			    -exec cp -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/ \;
+			find lib -maxdepth 1 -name \*.a \
+			    -exec mv -f '{}' rumprun-${MACHINE_GNU_ARCH}/lib/ \;
+			# FIXME: need to create empty librump.a for linux
+			ar rc rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/librump.a
+		fi
 		# make sure special cases are visible everywhere
 		for x in c pthread ; do
 			rm -f rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}/lib${x}.a

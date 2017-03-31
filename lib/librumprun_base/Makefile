@@ -2,10 +2,14 @@ LIB=		rumprun_base
 
 SRCS=		main.c rumprun.c
 SRCS+=		parseargs.c config.c
-SRCS+=		malloc.c netbsd_initfini.c signals.c
-SRCS+=		syscall_mman.c syscall_misc.c
-SRCS+=		__errno.c _lwp.c libc_stubs.c
-SRCS+=		daemon.c
+SRCS+=		malloc.c
+SRCS+=		__errno.c libc_stubs.c
+SRCS+=		daemon.c syscall_misc.c
+
+.if ${RUMPKERNEL} == "netbsd"
+SRCS+=		netbsd_initfini.c signals.c
+SRCS+=		_lwp.c
+SRCS+=		syscall_mman.c
 SRCS+=		sysproxy.c
 
 # doesn't really belong here, but at the moment we don't have
@@ -14,6 +18,11 @@ SRCS+=		platefs.c
 
 INCS=		platefs.h
 INCSDIR=	/usr/include/rumprun
+.else
+SRCS+=		linux_initfini.c
+.include "${.CURDIR}/pthread/Makefile.inc"
+CFLAGS+=	-DCONFIG_LKL -DMUSL_LIBC
+.endif
 
 WARNS=		5
 

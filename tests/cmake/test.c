@@ -10,7 +10,7 @@
  * So we assume a Linux host.
  */
 
-#ifdef HAVE_SYS_EPOLL_H
+#if defined (HAVE_SYS_EPOLL_H) && (__NetBSD__)
 #error Should not have epoll.  In case NetBSD now has epoll, please update test.
 #endif
 #ifndef HAVE_SELECT

@@ -26,7 +26,24 @@
 #ifndef _BMK_BASE_RUMPRUN_TEST_H_
 #define _BMK_BASE_RUMPRUN_TEST_H_
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
+#else
+#ifndef __BEGIN_DECLS
+#define __BEGIN_DECLS
+#endif
+#ifndef __END_DECLS
+#define __END_DECLS
+#endif
+
+#ifndef roundup2
+#define	roundup2(x,m)	((((x) - 1) | ((m) - 1)) + 1)
+#endif
+
+#ifndef __arraycount
+#define __arraycount(_ar_) (sizeof(_ar_)/sizeof(_ar_[0]))
+#endif
+#endif
 
 __BEGIN_DECLS
 int rumprun_test(int, char **);

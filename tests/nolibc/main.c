@@ -6,7 +6,16 @@
 #include "nolibc.h"
 
 #include <rump/rump.h>
+#ifdef LINUX_RUMP
+#include <lkl.h>
+int rump___sysimpl_reboot(int, char *);
+#define rump_sys_reboot rump___sysimpl_reboot
+#define rump_sys_write lkl_sys_write
+#define rump_sys_open lkl_sys_open
+#include "stub.c"
+#else
 #include <rump/rump_syscalls.h>
+#endif
 
 static ssize_t
 writestr(int fd, const char *str)
@@ -25,7 +34,7 @@ bmk_mainthread(void *cmdline)
 	writestr(1, "Hello, stdout!\n");
 
 	bmk_printf("open(/notexisting): ");
-	fd = rump_sys_open("/notexisting", 0);
+	fd = rump_sys_open("/notexisting", 0, 0);
 	if (fd == -1) {
 		int errno = *bmk_sched_geterrno();
 		if (errno == RUMP_ENOENT) {

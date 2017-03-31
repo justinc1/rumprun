@@ -14,7 +14,9 @@ OBJ_DIR ?= $(CURDIR)/obj
 
 LDSCRIPT:= $(abspath $(OBJ_DIR)/xen/minios.lds)
 
+ifeq (${RUMPKERNEL},netbsd)
 INSTALLTGTS=	librumpxen_xendev_install librumpnet_xenif_install
+endif
 
 include ../Makefile.inc
 
@@ -49,7 +51,11 @@ links:
 $(eval $(call BUILDLIB_target,librumpxen_xendev,.))
 $(eval $(call BUILDLIB_target,librumpnet_xenif,.))
 
+ifeq (${RUMPKERNEL},netbsd)
 xenlibs: ${RROBJLIB}/librumpxen_xendev/librumpxen_xendev.a ${RROBJLIB}/librumpnet_xenif/librumpnet_xenif.a
+else
+xenlibs:
+endif
 
 $(MAINOBJ): $(RUMP_OBJS) platformlibs xenlibs
 	$(CC) -Wl,-r $(CFLAGS) $(LDFLAGS) $(RUMP_OBJS) -nostdlib -o $@ \

@@ -30,14 +30,26 @@
  */
 
 #include <sys/param.h>
+
+#ifdef __linux__
+#include <sys/types.h>
+#include <stdbool.h>
+#endif
+
+#ifdef __NetBSD__
 #include <sys/disklabel.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#ifdef __NetBSD__
 #include <ufs/ufs/ufsmount.h>
 #include <isofs/cd9660/cd9660_mount.h>
 
 #include <dev/vndvar.h>
+#elif __linux__
+#include <sys/mount.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -418,6 +430,7 @@ handle_net(jsmntok_t *t, int left, char *data)
 	return 2*objsize + 1;
 }
 
+#ifdef __NetBSD__
 static void
 makevnddev(int israw, int unit, int part, char *storage, size_t storagesize)
 {
@@ -532,6 +545,49 @@ mount_kernfs(const char *dev, const char *mp)
 
 	return false;
 }
+
+#elif __linux__
+
+static char *
+configvnd(const char *path)
+{
+	errx(1, "vnd is not supported with LKL \"%s\"", path);
+	return NULL;
+}
+
+static char *
+configetfs(const char *path, int hard)
+{
+	errx(1, "etfs is not supported with LKL \"%s\"", path);
+	return NULL;
+}
+
+static bool
+mount_blk(const char *dev, const char *mp)
+{
+	/* XXX: hardcored major/minor value for virtio-blk */
+	unsigned long major = 254, minor = 0, enc_dev;
+
+	enc_dev = (minor & 0xff) | (major << 8) | ((minor & ~0xff) << 12);
+
+	if (mknod(dev, 0666 | S_IFBLK, enc_dev) == -1)
+		err(1, "mknod %s", dev);
+
+	if (mount(dev, mp, "ext4", 0, NULL) == 0)
+		return true;
+	if (mount(dev, mp, "iso9660", MS_RDONLY, NULL) == 0)
+		return true;
+
+	return false;
+}
+
+static bool
+mount_kernfs(const char *dev, const char *mp)
+{
+	errx(1, "kernfs is not supported with LKL \"%s\"", dev);
+	return false;
+}
+#endif
 
 struct {
 	const char *mt_fstype;

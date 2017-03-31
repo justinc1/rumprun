@@ -1,6 +1,12 @@
 [submodule "buildrump.sh"]
 	path = buildrump.sh
-	url = https://github.com/rumpkernel/buildrump.sh
+	url = https://github.com/libos-nuse/buildrump.sh
 [submodule "src-netbsd"]
 	path = src-netbsd
 	url = https://github.com/rumpkernel/src-netbsd
+[submodule "linux"]
+	path = linux
+	url = https://github.com/libos-nuse/lkl-linux.git
+[submodule "musl"]
+	path = musl
+	url = https://github.com/libos-nuse/musl.git
