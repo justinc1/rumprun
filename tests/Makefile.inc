@@ -4,6 +4,7 @@ CC= ${RUMPRUN_CC}
 CXX= ${RUMPRUN_CXX}
 
 CFLAGS+= -Wall -Werror -Wmissing-prototypes -Wstrict-prototypes -g
+CFLAGS+= -include ../../rumpkernel/linux.h
 LDLIBS= -lrumprun_tester
 
 %:: %.c

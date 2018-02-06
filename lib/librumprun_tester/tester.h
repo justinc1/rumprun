@@ -26,7 +26,9 @@
 #ifndef _BMK_BASE_RUMPRUN_TEST_H_
 #define _BMK_BASE_RUMPRUN_TEST_H_
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
+#endif
 
 __BEGIN_DECLS
 int rumprun_test(int, char **);

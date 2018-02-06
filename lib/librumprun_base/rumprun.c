@@ -23,12 +23,16 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
+#ifdef __NetBSD__
 #include <sys/sysctl.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -43,7 +47,14 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#ifdef __NetBSD__
 #include <fs/tmpfs/tmpfs_args.h>
+#endif
+
+#ifdef __linux__
+#define CONFIG_AUTO_LKL_POSIX_HOST
+#include <lkl_host.h>
+#endif
 
 #include <bmk-core/platform.h>
 
@@ -79,22 +90,31 @@ int rumprun_cold = 1;
 void
 rumprun_boot(char *cmdline)
 {
+#ifdef __NetBSD__
 	struct tmpfs_args ta = {
 		.ta_version = TMPFS_ARGS_VERSION,
 		.ta_size_max = 1*1024*1024,
 		.ta_root_mode = 01777,
 	};
-	int tmpfserrno;
+	int x;
+#endif
+	int tmpfserrno = -1;
 	char *sysproxy;
-	int rv, x;
+	int rv;
 
 	rump_boot_setsigmodel(RUMP_SIGMODEL_IGNORE);
 	rump_init();
 
 	/* mount /tmp before we let any userspace bits run */
+#ifdef __NetBSD__
 	rump_sys_mount(MOUNT_TMPFS, "/tmp", 0, &ta, sizeof(ta));
+#elif __linux__
+	rump_sys_mount("tmpfs", "/tmp", 0, NULL, 0);
+#endif
+
 	tmpfserrno = errno;
 
+#ifdef __NetBSD__
 	/*
 	 * XXX: _netbsd_userlevel_init() should technically be called
 	 * in mainbouncer() per process.  However, there's currently no way
@@ -107,6 +127,9 @@ rumprun_boot(char *cmdline)
 	 */
 	rumprun_lwp_init();
 	_netbsd_userlevel_init();
+#elif __linux__
+	_linux_userlevel_init();
+#endif
 
 	/* print tmpfs result only after we bootstrapped userspace */
 	if (tmpfserrno == 0) {
@@ -121,9 +144,10 @@ rumprun_boot(char *cmdline)
 	 * (note: we don't check for errors since net.inet.ip.dad_count
 	 * is not present if the networking stack isn't present)
 	 */
+#ifdef __NetBSD__
 	x = 0;
 	sysctlbyname("net.inet.ip.dad_count", NULL, NULL, &x, sizeof(x));
-
+#endif
 	rumprun_config(cmdline);
 
 	sysproxy = getenv("RUMPRUN_SYSPROXY");
@@ -208,6 +232,7 @@ mainbouncer(void *arg)
 	exit(rv);
 }
 
+#ifdef __NetBSD__
 static void
 setupproc(struct rumprunner *rr)
 {
@@ -256,6 +281,7 @@ setupproc(struct rumprunner *rr)
 
 	pipein = newpipein;
 }
+#endif
 
 void *
 rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
@@ -270,7 +296,11 @@ rumprun(int flags, int (*mainfun)(int, char *[]), int argc, char *argv[])
 	rr->rr_argv = argv;
 	rr->rr_flags = flags; /* XXX */
 
+#ifdef __NetBSD__
 	setupproc(rr);
+#elif __linux__
+	lkl_parse_env();
+#endif
 
 	if (pthread_create(&rr->rr_mainthread, NULL, mainbouncer, rr) != 0) {
 		fprintf(stderr, "rumprun: running %s failed\n", argv[0]);
@@ -365,7 +395,9 @@ void __attribute__((noreturn))
 rumprun_reboot(void)
 {
 
+#ifdef __NetBSD__
 	_netbsd_userlevel_fini();
+#endif
 	rump_sys_reboot(0, 0);
 
 	bmk_platform_halt("reboot returned");

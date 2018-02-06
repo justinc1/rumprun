@@ -5,19 +5,23 @@ endif
 CPPFLAGS+=	-Iinclude -I../../include -I${RROBJ}/include -nostdinc
 CFLAGS+=	${BUILDRUMP_TOOL_CFLAGS}
 
+ifeq (${RUMPKERNEL},netbsd)
 TARGETS=	rumpkernlibs
 # compiler_rt is strictly speaking necessary only in KERNONLY=true,
 # but building it always makes testing kernonly easier
 TARGETS+=	compiler_rt
 INSTALLTGTS+=	librumpkern_bmktc_install
 INSTALLTGTS+=	librumpkern_mman_install
+endif
 
 ifneq (${KERNONLY},true)
 TARGETS+=	userlibs
 INSTALLTGTS+=	librumprun_base_install librumprun_tester_install2
+ifeq (${RUMPKERNEL},netbsd)
 INSTALLTGTS+=	librumprunfs_base_install_custom
 ifeq (${CONFIG_CXX},yes)
 INSTALLTGTS+=	libunwind_install2
+endif
 endif
 endif
 
@@ -84,13 +88,22 @@ endif
 PSEUDOSTUBS:= ${RROBJ}/pseudolinkstubs
 
 ${PSEUDOSTUBS}.c: ${RROBJLIB}/librumprun_base/librumprun_base.a
+ifeq (${RUMPKERNEL},netbsd)
 	sh ../makepseudolinkstubs.sh ${NM} ${RUMPSRC} $< $@
+endif
+ifeq (${RUMPKERNEL},linux)
+	sh ../makepseudolinkstubs-linux.sh $@
+endif
 
 ${RROBJ}/bmk.ldscript: ${LDSCRIPT}
 	ln -sf $< $@
 
 commonlibs: platformlibs userlibs
+ifeq (${RUMPKERNEL},netbsd)
 userlibs: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a ${LIBUNWIND} ${RROBJLIB}/librumprunfs_base/librumprunfs_base.a
+else
+userlibs: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a
+endif
 platformlibs: ${RROBJLIB}/libbmk_core/libbmk_core.a ${RROBJLIB}/libbmk_rumpuser/libbmk_rumpuser.a ${RROBJ}/bmk.ldscript
 rumpkernlibs: ${RROBJLIB}/librumpkern_bmktc/librumpkern_bmktc.a ${RROBJLIB}/librumpkern_mman/librumpkern_mman.a
 compiler_rt: ${RROBJLIB}/libcompiler_rt/libcompiler_rt.a

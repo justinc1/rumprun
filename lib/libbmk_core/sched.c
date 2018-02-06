@@ -719,6 +719,14 @@ bmk_sched_init_mainlwp(void *cookie)
 	return bmk_current;
 }
 
+void *bmk_sched_get_cookie(void);
+void *
+bmk_sched_get_cookie(void)
+{
+
+	return bmk_current->bt_cookie;
+}
+
 const char *
 bmk_sched_threadname(struct bmk_thread *thread)
 {

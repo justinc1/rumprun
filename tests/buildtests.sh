@@ -42,9 +42,15 @@ test_apptools()
 	case ${PLATFORM} in
 	hw)
 		RUMPBAKE_PLATFORM='hw_generic'
+		if [ ${RUMPKERNEL} = "linux" ] ; then
+			RUMPBAKE_PLATFORM='hw_lkl'
+		fi
 		;;
 	xen)
 		RUMPBAKE_PLATFORM='xen_pv'
+		if [ ${RUMPKERNEL} = "linux" ] ; then
+			RUMPBAKE_PLATFORM='xen_pv_lkl'
+		fi
 		;;
 	*)
 		echo ">> unknown platform \"$PLATFORM\""

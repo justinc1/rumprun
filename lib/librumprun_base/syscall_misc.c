@@ -23,13 +23,21 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
 #include <sys/resource.h>
 #include <sys/time.h>
+#elif __linux__
+#include <bmk-rumpuser/core_types.h>
+#include <bmk-core/types.h>
+#include <sys/reboot.h>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
+#ifdef __NetBSD__
 #include <lwp.h>
+#endif
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -46,7 +54,11 @@ _exit(int eval)
 
 	if (__predict_false(rumprun_cold)) {
 		printf("\n=== bootstrap failed\n");
+#ifdef __NetBSD__
 		reboot(0, NULL);
+#elif __linux__
+		rumprun_reboot();
+#endif
 		/*NOTREACHED*/
 	}
 
@@ -58,7 +70,7 @@ _exit(int eval)
 
 	pthread_exit((void *)(uintptr_t)eval);
 }
-
+#ifdef __NetBSD__
 /* XXX: manual proto.  plug into libc internals some other day */
 int     ____sigtimedwait50(const sigset_t * __restrict,
     siginfo_t * __restrict, struct timespec * __restrict);
@@ -105,3 +117,4 @@ __getrusage50(int who, struct rusage *usage)
 	/* XXX: wrong in many ways */
 	return ENOTSUP;
 }
+#endif	/* __NetBSD__ */

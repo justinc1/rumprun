@@ -34,11 +34,15 @@
  * work correctly from one hardware architecture to another.
  */
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
 
 #if !defined(lint)
 __RCSID("$NetBSD: rumpuser_sp.c,v 1.68 2014/12/08 00:12:03 justin Exp $");
 #endif /* !lint */
+#elif __linux__
+#define __unused __attribute__((__unused__))
+#endif
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -639,7 +643,9 @@ tcp_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	int port;
 
 	memset(&sin, 0, sizeof(sin));
+#ifndef __linux__
 	sin.sin_len = sizeof(sin);
+#endif
 	sin.sin_family = AF_INET;
 
 	p = strchr(addr, ':');

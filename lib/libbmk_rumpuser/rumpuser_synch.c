@@ -123,6 +123,14 @@ rumpuser_thread_join(void *p)
 	return 0;
 }
 
+/* FIXME */
+void *rumpuser_thread_self(void);
+void *
+rumpuser_thread_self(void)
+{
+	return bmk_current;
+}
+
 struct rumpuser_mtx {
 	struct waithead waiters;
 	int v;
@@ -480,4 +488,20 @@ rumpuser_curlwp(void)
 {
 
 	return current_lwp;
+}
+
+
+void *rumpuser_getcookie(void);
+void *bmk_sched_get_cookie(void);
+void *
+rumpuser_getcookie(void)
+{
+	return bmk_sched_get_cookie();
+}
+
+void rumpuser_setcookie(void*);
+void
+rumpuser_setcookie(void* cookie)
+{
+	bmk_sched_init_mainlwp(cookie);
 }

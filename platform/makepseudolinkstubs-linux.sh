@@ -1,0 +1,81 @@
+#!/bin/sh
+
+TMP=$1
+
+cat << EOF > ${TMP}
+int *__errno(void) __attribute__((weak));
+int *__errno(void)
+{
+	return 0;
+}
+
+
+int rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
+	int joinable, int pri, int cpuidx, void **tptr) __attribute__((weak));
+int rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
+	int joinable, int pri, int cpuidx, void **tptr)
+{
+	return 0;
+}
+
+int  rumpuser_thread_join(void *) __attribute__((weak));
+int
+rumpuser_thread_join(void *p)
+{
+	return 0;
+}
+
+void *realloc(void *p, int n) __attribute__((weak));
+void *realloc(void *p, int n)
+{
+	return 0;
+}
+
+void *calloc(int m, int n) __attribute__((weak));
+void *calloc(int m, int n)
+{
+	return 0;
+}
+
+void free(void *cp) __attribute__((weak));
+void free(void *cp)
+{
+}
+
+long lkl_syscall(long no, long *params) __attribute__((weak));
+long lkl_syscall(long no, long *params)
+{
+	return 0;
+}
+
+void _start(void);
+void _start(void)
+{
+}
+
+void _exit(int);
+void _exit(int t)
+{
+}
+
+
+void *rumprun_thread_gettcb(void) __attribute__((weak));
+void *rumprun_thread_gettcb(void)
+{
+	return 0;
+}
+
+void *rumprun_thread_create_withtls(int (*)(void *), void *,
+				    void *, int, void *) __attribute__((weak));
+void *rumprun_thread_create_withtls(int (*f)(void *), void *a,
+				    void *s, int ss, void *tls)
+{
+	return 0;
+}
+
+void rumprun_thread_exit_withtls(void) __attribute__((weak));
+void rumprun_thread_exit_withtls(void)
+{
+}
+
+EOF
